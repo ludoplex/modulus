@@ -335,10 +335,7 @@ class Variance(EnsembleMetrics):
         else:
             self.sum2 = torch.sum((inputs - self.sum / self.n) ** 2, dim=dim)
 
-        if self.n < 2.0:
-            return self.sum2
-        else:
-            return self.sum2 / (self.n - 1.0)
+        return self.sum2 if self.n < 2.0 else self.sum2 / (self.n - 1.0)
 
     def update(self, inputs: Tensor) -> Tensor:
         """Update current variance value and essential statistics with new data
@@ -378,10 +375,7 @@ class Variance(EnsembleMetrics):
         self.sum2 += new_sum2
         self.sum2 += self.n / new_n / (self.n + new_n) * (delta) ** 2
         self.n += new_n
-        if self.n < 2.0:
-            return self.sum2
-        else:
-            return self.sum2 / (self.n - 1.0)
+        return self.sum2 if self.n < 2.0 else self.sum2 / (self.n - 1.0)
 
     @property
     def mean(self) -> Tensor:
@@ -405,8 +399,7 @@ class Variance(EnsembleMetrics):
             self.n > 1.0
         ), "Error! In order to finalize, there needs to be at least 2 samples."
         self.var = self.sum2 / (self.n - 1.0)
-        if std:
-            self.std = torch.sqrt(self.var)
-            return self.std
-        else:
+        if not std:
             return self.var
+        self.std = torch.sqrt(self.var)
+        return self.std

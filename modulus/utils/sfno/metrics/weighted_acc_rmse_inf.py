@@ -31,11 +31,9 @@ def unlog_tp_torch(x, eps=1e-5):  # pragma: no cover
     return eps * (torch.exp(x) - 1)
 
 
-def mean(x, axis=None):  # pragma: no cover
+def mean(x, axis=None):    # pragma: no cover
     """Calculates the spatial mean."""
-    # spatial mean
-    y = np.sum(x, axis) / np.size(x, axis)
-    return y
+    return np.sum(x, axis) / np.size(x, axis)
 
 
 def lat_np(j, num_lat):  # pragma: no cover
@@ -43,7 +41,7 @@ def lat_np(j, num_lat):  # pragma: no cover
     return 90 - j * 180 / (num_lat - 1)
 
 
-def weighted_acc(pred, target, weighted=True):  # pragma: no cover
+def weighted_acc(pred, target, weighted=True):    # pragma: no cover
     """
     Takes in arrays of size [1, num_lat, num_long]  and returns latitude-weighted
     correlation
@@ -64,13 +62,12 @@ def weighted_acc(pred, target, weighted=True):  # pragma: no cover
         if weighted
         else 1
     )
-    r = (weight * pred * target).sum() / np.sqrt(
+    return (weight * pred * target).sum() / np.sqrt(
         (weight * pred * pred).sum() * (weight * target * target).sum()
     )
-    return r
 
 
-def weighted_acc_masked(pred, target, weighted=True, maskarray=1):  # pragma: no cover
+def weighted_acc_masked(pred, target, weighted=True, maskarray=1):    # pragma: no cover
     """
     Takes in arrays of size [1, num_lat, num_long]  and returns masked latitude-weighted
     correlation
@@ -91,11 +88,10 @@ def weighted_acc_masked(pred, target, weighted=True, maskarray=1):  # pragma: no
         if weighted
         else 1
     )
-    r = (maskarray * weight * pred * target).sum() / np.sqrt(
+    return (maskarray * weight * pred * target).sum() / np.sqrt(
         (maskarray * weight * pred * pred).sum()
         * (maskarray * weight * target * target).sum()
     )
-    return r
 
 
 def weighted_rmse(pred, target):  # pragma: no cover
@@ -162,7 +158,7 @@ def latitude_weighting_factor_torch(
 @torch.jit.script
 def weighted_rmse_torch_channels(
     pred: torch.Tensor, target: torch.Tensor
-) -> torch.Tensor:  # pragma: no cover
+) -> torch.Tensor:    # pragma: no cover
     """Calculates the latitude-weighted rmse for each channel"""
     # takes in arrays of size [n, c, h, w]  and returns latitude-weighted rmse for each chann
     num_lat = pred.shape[2]
@@ -173,8 +169,7 @@ def weighted_rmse_torch_channels(
     weight = torch.reshape(
         latitude_weighting_factor_torch(lat_t, num_lat, s), (1, 1, -1, 1)
     )
-    result = torch.sqrt(torch.mean(weight * (pred - target) ** 2.0, dim=(-1, -2)))
-    return result
+    return torch.sqrt(torch.mean(weight * (pred - target) ** 2.0, dim=(-1, -2)))
 
 
 @torch.jit.script
@@ -189,7 +184,7 @@ def weighted_rmse_torch(
 @torch.jit.script
 def weighted_acc_masked_torch_channels(
     pred: torch.Tensor, target: torch.Tensor, maskarray: torch.Tensor
-) -> torch.Tensor:  # pragma: no cover
+) -> torch.Tensor:    # pragma: no cover
     """Takes in arrays of size [n, c, h, w]  and returns latitude-weighted ACC"""
     num_lat = pred.shape[2]
     lat_t = torch.arange(start=0, end=num_lat, device=pred.device)
@@ -197,17 +192,18 @@ def weighted_acc_masked_torch_channels(
     weight = torch.reshape(
         latitude_weighting_factor_torch(lat_t, num_lat, s), (1, 1, -1, 1)
     )
-    result = torch.sum(maskarray * weight * pred * target, dim=(-1, -2)) / torch.sqrt(
+    return torch.sum(
+        maskarray * weight * pred * target, dim=(-1, -2)
+    ) / torch.sqrt(
         torch.sum(maskarray * weight * pred * pred, dim=(-1, -2))
         * torch.sum(maskarray * weight * target * target, dim=(-1, -2))
     )
-    return result
 
 
 @torch.jit.script
 def weighted_acc_torch_channels(
     pred: torch.Tensor, target: torch.Tensor
-) -> torch.Tensor:  # pragma: no cover
+) -> torch.Tensor:    # pragma: no cover
     """Takes in arrays of size [n, c, h, w]  and returns latitude-weighted ACC"""
     num_lat = pred.shape[2]
     # num_long = target.shape[2]
@@ -216,11 +212,10 @@ def weighted_acc_torch_channels(
     weight = torch.reshape(
         latitude_weighting_factor_torch(lat_t, num_lat, s), (1, 1, -1, 1)
     )
-    result = torch.sum(weight * pred * target, dim=(-1, -2)) / torch.sqrt(
+    return torch.sum(weight * pred * target, dim=(-1, -2)) / torch.sqrt(
         torch.sum(weight * pred * pred, dim=(-1, -2))
         * torch.sum(weight * target * target, dim=(-1, -2))
     )
-    return result
 
 
 @torch.jit.script
@@ -235,12 +230,12 @@ def weighted_acc_torch(
 @torch.jit.script
 def unweighted_acc_torch_channels(
     pred: torch.Tensor, target: torch.Tensor
-) -> torch.Tensor:  # pragma: no cover
+) -> torch.Tensor:    # pragma: no cover
     """Calculates the ACC without weighting"""
-    result = torch.sum(pred * target, dim=(-1, -2)) / torch.sqrt(
-        torch.sum(pred * pred, dim=(-1, -2)) * torch.sum(target * target, dim=(-1, -2))
+    return torch.sum(pred * target, dim=(-1, -2)) / torch.sqrt(
+        torch.sum(pred * pred, dim=(-1, -2))
+        * torch.sum(target * target, dim=(-1, -2))
     )
-    return result
 
 
 @torch.jit.script

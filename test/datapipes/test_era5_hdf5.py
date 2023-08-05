@@ -195,10 +195,7 @@ def test_era5_hdf5_shape(
         assert common.check_seq_length(output, num_steps)
 
         # check channels
-        if data_channels is None:
-            nr_channels = 3
-        else:
-            nr_channels = len(data_channels)
+        nr_channels = 3 if data_channels is None else len(data_channels)
         assert common.check_channels(input, nr_channels, axis=1)
         assert common.check_channels(output, nr_channels, axis=2)
 
@@ -262,12 +259,7 @@ def test_era5_hdf5_shuffle(data_dir, stats_dir, shuffle, stride, device):
         device=device,
     )
 
-    # get all samples
-    # TODO generalize this
-    tensors = []
-    for data in datapipe:
-        tensors.append(data[0]["invar"])
-
+    tensors = [data[0]["invar"] for data in datapipe]
     # check sample order
     assert common.check_shuffle(tensors, shuffle, stride, 8)
 

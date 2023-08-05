@@ -23,7 +23,7 @@ import torch.distributed as dist
 from modulus.utils.sfno.distributed import comm
 
 
-def init_distributed_io(params):  # pragma: no cover
+def init_distributed_io(params):    # pragma: no cover
     """
     Initialize distributed IO
     """
@@ -47,9 +47,9 @@ def init_distributed_io(params):  # pragma: no cover
 
     # to simplify, the number of total IO ranks has to be 1 or equal to the model parallel size
     num_io_ranks = math.prod(params.io_grid)
-    assert (num_io_ranks == 1) or (num_io_ranks == comm.get_size("spatial"))
-    assert (params.io_grid[1] == comm.get_size("h")) or (params.io_grid[1] == 1)
-    assert (params.io_grid[2] == comm.get_size("w")) or (params.io_grid[2] == 1)
+    assert num_io_ranks in [1, comm.get_size("spatial")]
+    assert params.io_grid[1] in [comm.get_size("h"), 1]
+    assert params.io_grid[2] in [comm.get_size("w"), 1]
 
     # get io ranks: mp_rank = x_coord + params.io_grid[0] * (ycoord + params.io_grid[1] * zcoord)
     mp_rank = comm.get_rank("model")
@@ -64,7 +64,7 @@ def init_distributed_io(params):  # pragma: no cover
 
 def get_dataloader(
     params, files_pattern, device, train=True, final_eval=False
-):  # pragma: no cover
+):    # pragma: no cover
     """
     Get the dataloader
     """
@@ -161,7 +161,4 @@ def get_dataloader(
         # not needed for the no multifiles case
         sampler = None
 
-    if train:
-        return dataloader, dataset, sampler
-    else:
-        return dataloader, dataset
+    return (dataloader, dataset, sampler) if train else (dataloader, dataset)

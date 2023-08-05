@@ -311,5 +311,8 @@ def test_spec_conv_4d(device):
     ).to(device)
     with torch.no_grad():
         assert torch.allclose(
-            spec_conv_orig(invar), spec_conv_modulus(invar), rtol=1e-06, atol=1e-06
-        ), f"SpectralConv4d output not identical to that of refrence layer"
+            spec_conv_orig(invar),
+            spec_conv_modulus(invar),
+            rtol=1e-06,
+            atol=1e-06,
+        ), "SpectralConv4d output not identical to that of refrence layer"

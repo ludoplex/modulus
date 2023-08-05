@@ -38,7 +38,7 @@ def test_weight_norm(device):
     assert outvar.shape == (bsize, out_features)
     assert (
         wnorm.extra_repr()
-        == f"in_features={in_features}, out_features={out_features}, bias={True}"
+        == f"in_features={in_features}, out_features={out_features}, bias=True"
     )
 
     wnorm = WeightNormLinear(

@@ -38,7 +38,7 @@ def test_dlwp_forward(device):
     bsize = 4
     invar = torch.randn(bsize, 2, 6, 64, 64).to(device)
     assert common.validate_forward_accuracy(
-        model, (invar,), file_name=f"dlwp_output.pth", atol=1e-3
+        model, (invar,), file_name="dlwp_output.pth", atol=1e-3
     )
 
 
@@ -141,6 +141,6 @@ def test_dlwp_implementation():
 
     model = DLWP(16, 12, 64, depth=2)
     model_parameters = filter(lambda p: p.requires_grad, model.parameters())
-    params = sum([np.prod(p.size()) for p in model_parameters])
+    params = sum(np.prod(p.size()) for p in model_parameters)
 
     assert params == 2676376

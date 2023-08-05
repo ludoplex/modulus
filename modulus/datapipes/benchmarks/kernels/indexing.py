@@ -51,7 +51,7 @@ def _mod_int(x: int, length: int):  # pragma: no cover
 @wp.func
 def index_zero_edges_batched_2d(
     array: wp.array3d(dtype=float), b: int, x: int, y: int, lx: int, ly: int
-):  # pragma: no cover
+):    # pragma: no cover
     """Index batched 2d array with zero on edges
 
     Parameters
@@ -74,16 +74,7 @@ def index_zero_edges_batched_2d(
     float
         Array value
     """
-    if x == -1:
-        return 0.0
-    elif x == lx:
-        return 0.0
-    elif y == -1:
-        return 0.0
-    elif y == ly:
-        return 0.0
-    else:
-        return array[b, x, y]
+    return 0.0 if x == -1 or x == lx or y == -1 or y == ly else array[b, x, y]
 
 
 @wp.func

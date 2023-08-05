@@ -239,10 +239,7 @@ def set_checkpoint_fn(do_checkpointing: bool) -> Callable:
     Callable
         The selected checkpoint function to use for gradient computation.
     """
-    if do_checkpointing:
-        return checkpoint
-    else:
-        return checkpoint_identity
+    return checkpoint if do_checkpointing else checkpoint_identity
 
 
 def concat_message_function(edges: Tensor) -> Dict[str, Tensor]:
@@ -462,16 +459,14 @@ def agg_concat_dgl(
         graph.edata["x"] = efeat
 
         # aggregate edge features
-        if aggregation == "sum":
-            graph.update_all(fn.copy_e("x", "m"), fn.sum("m", "h_dest"))
-        elif aggregation == "mean":
+        if aggregation == "mean":
             graph.update_all(fn.copy_e("x", "m"), fn.mean("m", "h_dest"))
+        elif aggregation == "sum":
+            graph.update_all(fn.copy_e("x", "m"), fn.sum("m", "h_dest"))
         else:
             raise RuntimeError("Not a valid aggregation!")
 
-        # concat dst-node & edge features
-        cat_feat = torch.cat((graph.dstdata["h_dest"], dst_nfeat), -1)
-        return cat_feat
+        return torch.cat((graph.dstdata["h_dest"], dst_nfeat), -1)
 
 
 def aggregate_and_concat(
@@ -505,10 +500,8 @@ def aggregate_and_concat(
         If aggregation method is not sum or mean.
     """
 
-    if isinstance(graph, CuGraphCSC):
-        static_graph = graph.to_static_csc()
-        cat_feat = agg_concat_e2n(nfeat, efeat, static_graph, aggregation)
-    else:
-        cat_feat = agg_concat_dgl(efeat, nfeat, graph, aggregation)
+    if not isinstance(graph, CuGraphCSC):
+        return agg_concat_dgl(efeat, nfeat, graph, aggregation)
 
-    return cat_feat
+    static_graph = graph.to_static_csc()
+    return agg_concat_e2n(nfeat, efeat, static_graph, aggregation)

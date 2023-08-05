@@ -22,13 +22,12 @@ def calculate_checksum(file_path):
 
     with open(file_path, "rb") as f:
         while True:
-            data = f.read(8192)
-            if not data:
-                break
-            sha256.update(data)
+            if data := f.read(8192):
+                sha256.update(data)
 
-    calculated_checksum = sha256.hexdigest()
-    return calculated_checksum
+            else:
+                break
+    return sha256.hexdigest()
 
 
 def test_package(tmp_path: Path):
@@ -36,12 +35,10 @@ def test_package(tmp_path: Path):
     afile = tmp_path / "a.txt"
     afile.write_text(string)
 
-    path = "file://" + tmp_path.as_posix()
+    path = f"file://{tmp_path.as_posix()}"
     package = filesystem.Package(path, seperator="/")
     path = package.get("a.txt")
-    with open(path) as f:
-        ans = f.read()
-
+    ans = Path(path).read_text()
     assert ans == string
 
 

@@ -105,8 +105,7 @@ class SpectralFilterLayer(nn.Module):
         super(SpectralFilterLayer, self).__init__()
 
         if filter_type == "non-linear" and (
-            isinstance(forward_transform, th.RealSHT)
-            or isinstance(forward_transform, thd.DistributedRealSHT)
+            isinstance(forward_transform, (th.RealSHT, thd.DistributedRealSHT))
         ):
             self.filter = SpectralAttentionS2(
                 forward_transform,
@@ -121,8 +120,7 @@ class SpectralFilterLayer(nn.Module):
             )
 
         elif filter_type == "non-linear" and (
-            isinstance(forward_transform, RealFFT2)
-            or isinstance(forward_transform, DistributedRealFFT2)
+            isinstance(forward_transform, (RealFFT2, DistributedRealFFT2))
         ):
             self.filter = SpectralAttention2d(
                 forward_transform,
@@ -136,7 +134,6 @@ class SpectralFilterLayer(nn.Module):
                 bias=False,
             )
 
-        # spectral transform is passed to the module
         elif filter_type == "linear":
             self.filter = SpectralConvS2(
                 forward_transform,
@@ -148,7 +145,7 @@ class SpectralFilterLayer(nn.Module):
                 factorization=factorization,
                 separable=separable,
                 bias=False,
-                use_tensorly=False if factorization is None else True,
+                use_tensorly=factorization is not None,
             )
 
         else:
@@ -230,7 +227,7 @@ class FourierNeuralOperatorBlock(nn.Module):
         elif inner_skip == "identity":
             self.inner_skip = nn.Identity()
 
-        if filter_type == "linear" or filter_type == "real linear":
+        if filter_type in ["linear", "real linear"]:
             self.act_layer = get_activation(act_layer)
 
         # dropout

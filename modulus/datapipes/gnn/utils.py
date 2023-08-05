@@ -92,5 +92,4 @@ def load_json(file: str) -> Dict[str, torch.Tensor]:
     """
     with open(file, "r") as f:
         var_list = json.load(f)
-    var = {k: torch.tensor(v, dtype=torch.float) for k, v in var_list.items()}
-    return var
+    return {k: torch.tensor(v, dtype=torch.float) for k, v in var_list.items()}

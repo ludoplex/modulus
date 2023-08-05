@@ -152,7 +152,7 @@ def euler_flux_2d(
     p_l: float,
     p_r: float,
     gamma: float,
-):  # pragma: no cover
+):    # pragma: no cover
     """Compute Euler flux
 
     Parameters
@@ -182,8 +182,8 @@ def euler_flux_2d(
         Vector containing mass, momentum x, momentum y, and energy flux.
     """
     # get energies
-    e_l = p_l / (gamma - 1.0) + 0.5 * rho_l * (vx_l * vx_l + vy_l * vy_l)
-    e_r = p_r / (gamma - 1.0) + 0.5 * rho_r * (vx_r * vx_r + vy_r * vy_r)
+    e_l = p_l / (gamma - 1.0) + 0.5 * rho_l * (vx_l**2 + vy_l**2)
+    e_r = p_r / (gamma - 1.0) + 0.5 * rho_r * (vx_r**2 + vy_r**2)
 
     # averaged states
     rho_ave = 0.5 * (rho_l + rho_r)
@@ -358,7 +358,7 @@ def euler_extrapolation_batched_2d(
     dt: float,
     lx: int,
     ly: int,
-):  # pragma: no cover
+):    # pragma: no cover
     """Extrapolate Euler values to edges
 
     Parameters
@@ -409,7 +409,7 @@ def euler_extrapolation_batched_2d(
     b, i, j = wp.tid()
 
     # volume
-    vol = dx * dx
+    vol = dx**2
 
     # get rho stensil
     rho_1_1 = index_periodic_edges_batched_2d(rho, b, i, j, lx, ly)

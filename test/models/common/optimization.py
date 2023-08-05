@@ -175,7 +175,7 @@ def validate_amp(
 
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
 
-    for i in range(iterations):
+    for _ in range(iterations):
         with torch.autocast(amp_device, enabled=True, dtype=amp_dtype):
             optimizer.zero_grad()
             output = model.forward(*in_args)
@@ -245,11 +245,7 @@ def validate_combo_optims(
         scaler = torch.cuda.amp.GradScaler(enabled=amp_enabled)
 
     # Torch script, need to save it as seperate model since TS model doesnt have meta
-    if model.meta.jit:
-        fwd_model = torch.jit.script(model)
-    else:
-        fwd_model = model
-
+    fwd_model = torch.jit.script(model) if model.meta.jit else model
     def foward(in_args):
         """Mini-forward function to capture in cuda graph if needed"""
         # Test AMP

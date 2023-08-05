@@ -96,11 +96,7 @@ class DistributedRealFFT2(nn.Module):
         assert x.shape[1] % self.comm_size_w == 0
 
         # h and w is split. First we make w local by transposing into channel dim
-        if self.comm_size_w > 1:
-            xt = distributed_transpose_w.apply(x, (1, -1))
-        else:
-            xt = x
-
+        xt = distributed_transpose_w.apply(x, (1, -1)) if self.comm_size_w > 1 else x
         # do first FFT
         xtf = torch.fft.rfft(xt, n=self.nlon, dim=-1, norm="ortho")
 
@@ -117,11 +113,7 @@ class DistributedRealFFT2(nn.Module):
             y = xtfp
 
         # transpose: after this, c is split and h is local
-        if self.comm_size_h > 1:
-            yt = distributed_transpose_h.apply(y, (1, -2))
-        else:
-            yt = y
-
+        yt = distributed_transpose_h.apply(y, (1, -2)) if self.comm_size_h > 1 else y
         # the input data might be padded, make sure to truncate to nlat:
         # ytt = yt[..., :self.nlat, :]
 
@@ -178,11 +170,7 @@ class DistributedInverseRealFFT2(nn.Module):
         assert x.shape[1] % self.comm_size_w == 0
 
         # transpose: after that, channels are split, l is local:
-        if self.comm_size_h > 1:
-            xt = distributed_transpose_h.apply(x, (1, -2))
-        else:
-            xt = x
-
+        xt = distributed_transpose_h.apply(x, (1, -2)) if self.comm_size_h > 1 else x
         # truncate
         xtt = xt[..., : self.lmax, :]
 
@@ -198,11 +186,7 @@ class DistributedInverseRealFFT2(nn.Module):
             y = xfp
 
         # transpose: after this, channels are split and m is local
-        if self.comm_size_w > 1:
-            yt = distributed_transpose_w.apply(y, (1, -1))
-        else:
-            yt = y
-
+        yt = distributed_transpose_w.apply(y, (1, -1)) if self.comm_size_w > 1 else y
         # truncate
         ytt = yt[..., : self.mmax]
 
@@ -212,13 +196,11 @@ class DistributedInverseRealFFT2(nn.Module):
         # pad before we transpose back
         xp = F.pad(x, [0, self.lonpad])
 
-        # transpose: after this, m is split and channels are local
-        if self.comm_size_w > 1:
-            out = distributed_transpose_w.apply(xp, (-1, 1))
-        else:
-            out = xp
-
-        return out
+        return (
+            distributed_transpose_w.apply(xp, (-1, 1))
+            if self.comm_size_w > 1
+            else xp
+        )
 
 
 class _DistMatmulHelper(torch.autograd.Function):
@@ -240,13 +222,7 @@ class _DistMatmulHelper(torch.autograd.Function):
         if comm.get_size(inp_group_name) > 1:
             dist.all_reduce(xconv, group=comm.get_group(inp_group_name))
 
-        # add bias
-        if bias is not None:
-            xconvbias = xconv + bias
-        else:
-            xconvbias = xconv
-
-        return xconvbias
+        return xconv + bias if bias is not None else xconv
 
     @staticmethod
     def backward(ctx, grad_out):  # pragma: no cover
@@ -372,18 +348,20 @@ class DistributedEncoderDecoder(nn.Module):
         current_dim = input_dim
         comm_inp_name_tmp = comm_inp_name
         comm_out_name_tmp = comm_out_name
-        for i in range(num_layers - 1):
-            encoder_modules.append(
-                DistributedMatmul(
-                    current_dim,
-                    hidden_dim,
-                    1,
-                    comm_inp_name=comm_inp_name_tmp,
-                    comm_out_name=comm_out_name_tmp,
-                    bias=True,
+        for _ in range(num_layers - 1):
+            encoder_modules.extend(
+                (
+                    DistributedMatmul(
+                        current_dim,
+                        hidden_dim,
+                        1,
+                        comm_inp_name=comm_inp_name_tmp,
+                        comm_out_name=comm_out_name_tmp,
+                        bias=True,
+                    ),
+                    act(),
                 )
             )
-            encoder_modules.append(act())
             current_dim = hidden_dim
             comm_inp_name_tmp, comm_out_name_tmp = (
                 comm_out_name_tmp,
@@ -478,10 +456,7 @@ class DistributedMLP(nn.Module):
         return checkpoint(self.fwd, x)
 
     def forward(self, x):  # pragma: no cover
-        if self.checkpointing:
-            return self._checkpoint_forward(x)
-        else:
-            return self.fwd(x)
+        return self._checkpoint_forward(x) if self.checkpointing else self.fwd(x)
 
 
 class DistributedPatchEmbed(nn.Module):
@@ -557,16 +532,16 @@ class DistributedPatchEmbed(nn.Module):
 @torch.jit.script
 def compl_mul_add_fwd(
     a: torch.Tensor, b: torch.Tensor, c: torch.Tensor
-) -> torch.Tensor:  # pragma: no cover
+) -> torch.Tensor:    # pragma: no cover
     """complex multiplication and addition"""
     tmp = torch.einsum("bkixys,kiot->stbkoxy", a, b)
-    res = (
+    return (
         torch.stack(
-            [tmp[0, 0, ...] - tmp[1, 1, ...], tmp[1, 0, ...] + tmp[0, 1, ...]], dim=-1
+            [tmp[0, 0, ...] - tmp[1, 1, ...], tmp[1, 0, ...] + tmp[0, 1, ...]],
+            dim=-1,
         )
         + c
     )
-    return res
 
 
 @torch.jit.script

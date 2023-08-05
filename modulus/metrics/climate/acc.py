@@ -77,5 +77,4 @@ def acc(pred: Tensor, target: Tensor, climatology: Tensor, lat: Tensor) -> Tenso
     p1 = torch.sum(lat_weight[:, None] * pred_diff * target_diff, dim=(-2, -1))
     p2 = torch.sum(lat_weight[:, None] * pred_diff * pred_diff, dim=(-2, -1))
     p3 = torch.sum(lat_weight[:, None] * target_diff * target_diff, dim=(-2, -1))
-    m = p1 / torch.sqrt(p2 * p3)
-    return m
+    return p1 / torch.sqrt(p2 * p3)

@@ -498,7 +498,7 @@ class AFNO(Module):
                     sparsity_threshold=sparsity_threshold,
                     hard_thresholding_fraction=hard_thresholding_fraction,
                 )
-                for i in range(depth)
+                for _ in range(depth)
             ]
         )
 

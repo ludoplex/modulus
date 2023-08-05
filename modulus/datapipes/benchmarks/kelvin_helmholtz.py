@@ -251,8 +251,7 @@ class KelvinHelmholtz2D(Datapipe):
             wp.copy(self.seq_p[s], self.p)
 
             # iterations
-            for i in range(self.iteration_per_snapshot):
-
+            for _ in range(self.iteration_per_snapshot):
                 # compute primitives
                 wp.launch(
                     euler_conserved_to_primitive_batched_2d,

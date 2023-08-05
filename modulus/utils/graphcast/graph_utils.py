@@ -78,8 +78,7 @@ def create_heterograph(
     DGLGraph
         The dgl Graph.
     """
-    graph = dgl.heterograph({labels: ("coo", (src, dst))}, idtype=dtype)
-    return graph
+    return dgl.heterograph({labels: ("coo", (src, dst))}, idtype=dtype)
 
 
 def add_edge_features(graph: DGLGraph, pos: Tensor, normalize: bool = True) -> DGLGraph:
@@ -194,9 +193,7 @@ def latlon2xyz(latlon: Tensor, radius: float = 1, unit: str = "deg") -> Tensor:
     """
     if unit == "deg":
         latlon = deg2rad(latlon)
-    elif unit == "rad":
-        pass
-    else:
+    elif unit != "rad":
         raise ValueError("Not a valid unit")
     lat, lon = latlon[:, 0], latlon[:, 1]
     x = radius * torch.cos(lat) * torch.cos(lon)
@@ -262,9 +259,7 @@ def geospatial_rotation(
     # get the right unit
     if unit == "deg":
         invar = rad2deg(invar)
-    elif unit == "rad":
-        pass
-    else:
+    elif unit != "rad":
         raise ValueError("Not a valid unit")
 
     invar = torch.unsqueeze(invar, -1)
@@ -312,8 +307,7 @@ def azimuthal_angle(lon: Tensor) -> Tensor:
     Tensor
         Tensor of shape (N, ) containing the azimuthal angle
     """
-    angle = torch.where(lon >= 0.0, 2 * np.pi - lon, -lon)
-    return angle
+    return torch.where(lon >= 0.0, 2 * np.pi - lon, -lon)
 
 
 def polar_angle(lat: Tensor) -> Tensor:
@@ -330,8 +324,7 @@ def polar_angle(lat: Tensor) -> Tensor:
     Tensor
         Tensor of shape (N, ) containing the polar angle
     """
-    angle = torch.where(lat >= 0.0, lat, 2 * np.pi + lat)
-    return angle
+    return torch.where(lat >= 0.0, lat, 2 * np.pi + lat)
 
 
 def deg2rad(deg: Tensor) -> Tensor:

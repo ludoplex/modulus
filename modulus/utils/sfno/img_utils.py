@@ -50,7 +50,7 @@ def reshape_fields(
     y_roll,
     train,
     normalize=True,
-):  # pragma: no cover
+):    # pragma: no cover
     """
     Takes in np array of size (n_history+1, c, h, w) and returns torch tensor
     of size ((n_channels*(n_history+1), crop_size_x, crop_size_y)
@@ -69,9 +69,9 @@ def reshape_fields(
     maxs = np.load(params.max_path)[:, channels]
     means = np.load(params.global_means_path)[:, channels]
     stds = np.load(params.global_stds_path)[:, channels]
-    if crop_size_x == None:
+    if crop_size_x is None:
         crop_size_x = img_shape_x
-    if crop_size_y == None:
+    if crop_size_y is None:
         crop_size_y = img_shape_y
 
     if normalize:
@@ -82,8 +82,8 @@ def reshape_fields(
             img -= means
             img /= stds
 
-    if params.add_grid:
-        if inp_or_tar == "inp":
+    if inp_or_tar == "inp":
+        if params.add_grid:
             if params.gridtype == "linear":
                 assert (
                     params.n_grid_channels == 2

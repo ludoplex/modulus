@@ -50,26 +50,24 @@ def check_shuffle(
 
     # check if number of samples has correct length
     if correct_length - stride != len(tensor_tags):
-        logger.warning(f"Number of samples not matching expected")
+        logger.warning("Number of samples not matching expected")
         logger.warning(f"Expected Number of Samples: {correct_length}")
         logger.warning(f"Number of Samples: {len(tensor_tags)}")
         return False
 
     expected_tags = list(range(correct_length - stride))
 
-    # check if shuffle is false
     if not shuffle:
         if tensor_tags != expected_tags:
-            logger.warning(f"Shuffle is set to False however samples are not in order")
+            logger.warning("Shuffle is set to False however samples are not in order")
             logger.warning(f"Expected order: {expected_tags}")
             logger.warning(f"Sample order: {tensor_tags}")
             return False
 
-    # check if shuffle is True
     if shuffle:
         if sorted(tensor_tags) != expected_tags:
             logger.warning(
-                f"Shuffle is set to True however sorted samples don't match expected"
+                "Shuffle is set to True however sorted samples don't match expected"
             )
             logger.warning(f"Expected order: {expected_tags}")
             logger.warning(f"Sorted Sample order: {sorted(tensor_tags)}")

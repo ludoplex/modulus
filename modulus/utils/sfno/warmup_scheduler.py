@@ -24,10 +24,7 @@ class WarmupScheduler(lrs._LRScheduler):  # pragma: no cover
     def __init__(self, scheduler, num_warmup_steps, start_lr):
         self.scheduler = scheduler
         self.num_warmup_steps = num_warmup_steps
-        if not isinstance(start_lr, List):
-            self.start_lrs = [start_lr]
-        else:
-            self.start_lrs = start_lr
+        self.start_lrs = [start_lr] if not isinstance(start_lr, List) else start_lr
         self.steps = 0
 
         # this is hacky but I don't see a better way of doing that

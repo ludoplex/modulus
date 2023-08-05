@@ -248,7 +248,7 @@ def _rfft_onnx(
         _check_padding_rfft(s, dim, input.size())
 
     ndim = len(dim)
-    assert ndim in [1, 2], ndim
+    assert ndim in {1, 2}, ndim
 
     perm = not _is_last_dims(dim, input.ndim)
 
@@ -277,7 +277,7 @@ def _irfft_onnx(
         _check_padding_irfft(s, dim, input.size())
 
     ndim = len(dim)
-    assert ndim in [1, 2], ndim
+    assert ndim in {1, 2}, ndim
 
     # Whether to permute axes when DFT axis is not the last.
     perm = not _is_last_dims(dim, input.ndim)
@@ -302,10 +302,9 @@ def _irfft_onnx(
 
 
 def _contrib_rfft(g: torch.Graph, input: torch.Value, ndim: int) -> torch.Value:
-    assert ndim in [1, 2], ndim
+    assert ndim in {1, 2}, ndim
 
-    # See https://github.com/microsoft/onnxruntime/blob/main/docs/ContribOperators.md#com.microsoft.Rfft
-    output = g.op(
+    return g.op(
         "com.microsoft::Rfft",
         input,
         normalized_i=0,
@@ -313,14 +312,11 @@ def _contrib_rfft(g: torch.Graph, input: torch.Value, ndim: int) -> torch.Value:
         signal_ndim_i=ndim,
     )
 
-    return output
-
 
 def _contrib_irfft(g: torch.Graph, input: torch.Value, ndim: int) -> torch.Value:
-    assert ndim in [1, 2], ndim
+    assert ndim in {1, 2}, ndim
 
-    # See https://github.com/microsoft/onnxruntime/blob/main/docs/ContribOperators.md#com.microsoft.Irfft
-    output = g.op(
+    return g.op(
         "com.microsoft::Irfft",
         input,
         normalized_i=0,
@@ -328,16 +324,12 @@ def _contrib_irfft(g: torch.Graph, input: torch.Value, ndim: int) -> torch.Value
         signal_ndim_i=ndim,
     )
 
-    return output
-
 
 def _is_last_dims(dim: Tuple[int], inp_ndim: int) -> bool:
     ndim = len(dim)
-    for i, idim in enumerate(dim):
-        # This takes care of both positive and negative axis indices.
-        if idim % inp_ndim != inp_ndim - ndim + i:
-            return False
-    return True
+    return all(
+        idim % inp_ndim == inp_ndim - ndim + i for i, idim in enumerate(dim)
+    )
 
 
 def _check_padding_rfft(
@@ -403,10 +395,10 @@ def _scale_output_forward(
     """Scales the RFFT output according to norm parameter."""
 
     norm = "backward" if norm is None else norm
-    assert norm in ["forward", "backward", "ortho"], norm
+    assert norm in {"forward", "backward", "ortho"}, norm
 
     # No normalization for "backward" in RFFT ops.
-    if norm in ["forward", "ortho"]:
+    if norm in {"forward", "ortho"}:
         # Assuming DFT dimensions are the last. This is required by the current Contrib ops,
         # so the axes permutation of the input is done accordingly.
         dft_size = math.prod(sizes[-ndim:]).float()
@@ -422,14 +414,14 @@ def _scale_output_backward(
     """Scales the IRFFT output according to norm parameter."""
 
     norm = "backward" if norm is None else norm
-    assert norm in ["forward", "backward", "ortho"], norm
+    assert norm in {"forward", "backward", "ortho"}, norm
 
     # Things get interesting here: Contrib IRFFT op uses cuFFT cufftXtExec
     # followed by a custom CUDA kernel (`_Normalize`) which always performs
     # normalization (division by N) which means "norm" is essentially
     # always "backward" here. So we need to cancel this normalization
     # when norm is "forward" or "ortho".
-    if norm in ["forward", "ortho"]:
+    if norm in {"forward", "ortho"}:
         # Last dimension is complex numbers representation.
         # Second-to-last dim corresponds to last dim in RFFT transform.
         # This is required by the current Contrib ops,

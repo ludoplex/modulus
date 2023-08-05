@@ -40,9 +40,8 @@ def check_datapipe_iterable(datapipe: modulus.Datapipe, nr_iterations: int = 3) 
         for i, data in enumerate(datapipe):
             if i >= nr_iterations:
                 break
-            pass
         assert len(datapipe) > 0  # even if infinite, len should return a int
         return True
     except:
-        logger.warning(f"Datapipe is not iterable")
+        logger.warning("Datapipe is not iterable")
         return False

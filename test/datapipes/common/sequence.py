@@ -56,7 +56,7 @@ def check_sequence(
 
     # check if seq matches epected
     if correct_seq != tensor_tags:
-        logger.warning(f"Sequence does not match expected")
+        logger.warning("Sequence does not match expected")
         logger.warning(f"Expected Sequence: {correct_seq}")
         logger.warning(f"Sequence order: {tensor_tags}")
         return False

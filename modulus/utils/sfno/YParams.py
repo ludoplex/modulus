@@ -94,8 +94,8 @@ class YParams(ParamsBase):
     def log(self):
         """Log the parameters to the console"""
         logging.info("------------------ Configuration ------------------")
-        logging.info("Configuration file: " + str(self._yaml_filename))
-        logging.info("Configuration name: " + str(self._config_name))
+        logging.info(f"Configuration file: {str(self._yaml_filename)}")
+        logging.info(f"Configuration name: {str(self._config_name)}")
         for key, val in self.to_dict().items():
-            logging.info(str(key) + " " + str(val))
+            logging.info(f"{str(key)} {str(val)}")
         logging.info("---------------------------------------------------")

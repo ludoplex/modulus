@@ -90,8 +90,7 @@ def save_untrained_sfno(path):
     save_ddp_checkpoint(model, check_point_path, del_device_buffer=True)
 
     url = f"file://{path.as_posix()}"
-    package = Package(url, seperator="/")
-    return package
+    return Package(url, seperator="/")
 
 
 def test_sfno(tmp_path):
@@ -125,8 +124,7 @@ def save_untrained_dlwp(path):
     save_checkpoint(model, check_point_path, del_device_buffer=False)
 
     url = f"file://{path.as_posix()}"
-    package = Package(url, seperator="/")
-    return package
+    return Package(url, seperator="/")
 
 
 def test_dlwp(tmp_path):
@@ -167,8 +165,7 @@ def save_untrained_graphcast(path):
     save_ddp_checkpoint(model, check_point_path, del_device_buffer=False)
 
     url = f"file://{path.as_posix()}"
-    package = Package(url, seperator="/")
-    return package
+    return Package(url, seperator="/")
 
 
 def test_graphcast(tmp_path):

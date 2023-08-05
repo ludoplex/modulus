@@ -100,7 +100,7 @@ class GeneralES(object):
 
         # parse the files
         self._get_files_stats(enable_logging)
-        self.shuffle = True if train else False
+        self.shuffle = bool(train)
 
         # convert in_channels to list of slices:
         self.in_channels_slices = list(self._get_slices(self.in_channels))
@@ -127,7 +127,7 @@ class GeneralES(object):
     def _get_stats_h5(self, enable_logging):  # pragma: no cover
         with h5py.File(self.files_paths[0], "r") as _f:
             if enable_logging:
-                logging.info("Getting file stats from {}".format(self.files_paths[0]))
+                logging.info(f"Getting file stats from {self.files_paths[0]}")
             # original image shape (before padding)
             self.img_shape = _f["fields"].shape[
                 2:4
@@ -191,7 +191,7 @@ class GeneralES(object):
     def _get_stats_zarr(self, enable_logging):  # pragma: no cover
         with zarr.convenience.open(self.files_paths[0], "r") as _f:
             if enable_logging:
-                logging.info("Getting file stats from {}".format(self.files_paths[0]))
+                logging.info(f"Getting file stats from {self.files_paths[0]}")
             # original image shape (before padding)
             self.img_shape = _f["/fields"].shape[
                 2:4
@@ -344,38 +344,17 @@ class GeneralES(object):
                 )
             )
             logging.info(
-                "Found data at path {}. Number of examples: {}. Full image Shape: {} x {} x {}. Read Shape: {} x {} x {}".format(
-                    self.location,
-                    self.n_samples_available,
-                    self.img_shape[0],
-                    self.img_shape[1],
-                    self.total_channels,
-                    self.read_shape[0],
-                    self.read_shape[1],
-                    self.n_in_channels,
-                )
+                f"Found data at path {self.location}. Number of examples: {self.n_samples_available}. Full image Shape: {self.img_shape[0]} x {self.img_shape[1]} x {self.total_channels}. Read Shape: {self.read_shape[0]} x {self.read_shape[1]} x {self.n_in_channels}"
             )
             logging.info(
-                "Using {} from the total number of available samples with {} samples per epoch (corresponds to {} steps for {} shards with local batch size {})".format(
-                    self.n_samples_total,
-                    self.n_samples_per_epoch,
-                    self.num_steps_per_epoch,
-                    self.num_shards,
-                    self.batch_size,
-                )
+                f"Using {self.n_samples_total} from the total number of available samples with {self.n_samples_per_epoch} samples per epoch (corresponds to {self.num_steps_per_epoch} steps for {self.num_shards} shards with local batch size {self.batch_size})"
             )
-            logging.info("Delta t: {} hours".format(self.timestep_hours * self.dt))
+            logging.info(f"Delta t: {self.timestep_hours * self.dt} hours")
             logging.info(
-                "Including {} hours of past history in training at a frequency of {} hours".format(
-                    self.timestep_hours * self.dt * self.n_history,
-                    self.timestep_hours * self.dt,
-                )
+                f"Including {self.timestep_hours * self.dt * self.n_history} hours of past history in training at a frequency of {self.timestep_hours * self.dt} hours"
             )
             logging.info(
-                "Including {} hours of future targets in training at a frequency of {} hours".format(
-                    self.timestep_hours * self.dt * self.n_future,
-                    self.timestep_hours * self.dt,
-                )
+                f"Including {self.timestep_hours * self.dt * self.n_future} hours of future targets in training at a frequency of {self.timestep_hours * self.dt} hours"
             )
 
         # some state variables
@@ -387,7 +366,7 @@ class GeneralES(object):
             self._init_buffers()
 
     def _init_double_buff_host(self, n_tsteps, n_channels):  # pragma: no cover
-        buffs = [
+        return [
             np.zeros(
                 (
                     n_tsteps,
@@ -407,10 +386,9 @@ class GeneralES(object):
                 dtype=np.float32,
             ),
         ]
-        return buffs
 
     def _init_double_buff_gpu(self, n_tsteps, n_channels):  # pragma: no cover
-        buffs = [
+        return [
             cpx.zeros_pinned(
                 (
                     n_tsteps,
@@ -430,7 +408,6 @@ class GeneralES(object):
                 dtype=np.float32,
             ),
         ]
-        return buffs
 
     def _init_buffers(self):  # pragma: no cover
         # set device

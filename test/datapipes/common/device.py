@@ -40,11 +40,11 @@ def check_datapipe_device(sample: Tensor, device: Union[str, torch.device]) -> b
     if isinstance(device, str):
         device = torch.device(device)
     # Need a index id if cuda
-    if device.type == "cuda" and device.index == None:
+    if device.type == "cuda" and device.index is None:
         device = torch.device("cuda:0")
     # Check if sample is on correct device
     if sample.device != device:
-        logger.warning(f"Datapipe loading sample on incorrect device")
+        logger.warning("Datapipe loading sample on incorrect device")
         logger.warning(f"Expected Device: {type(device)}")
         logger.warning(f"Device: {type(sample.device)}")
         return False

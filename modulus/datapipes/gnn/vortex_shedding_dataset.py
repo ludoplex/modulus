@@ -97,7 +97,7 @@ class VortexSheddingDataset(DGLDataset):
         self.graphs, self.cells, self.node_type = [], [], []
         noise_mask, self.rollout_mask = [], []
         self.mesh_pos = []
-        for i in range(self.num_samples):
+        for _ in range(self.num_samples):
             data_np = dataset_iterator.get_next()
             data_np = {key: arr[:num_steps].numpy() for key, arr in data_np.items()}
             src, dst = self.cell_to_adj(data_np["cells"][0])  # assuming stationary mesh
@@ -191,11 +191,8 @@ class VortexSheddingDataset(DGLDataset):
         graph.ndata["y"] = node_targets
         if self.split == "train":
             return graph
-        else:
-            graph.ndata["mesh_pos"] = self.mesh_pos[gidx]
-            cells = self.cells[gidx]
-            rollout_mask = self.rollout_mask[gidx]
-            return graph, cells, rollout_mask
+        graph.ndata["mesh_pos"] = self.mesh_pos[gidx]
+        return graph, self.cells[gidx], self.rollout_mask[gidx]
 
     def __len__(self):
         return self.length
@@ -286,13 +283,12 @@ class VortexSheddingDataset(DGLDataset):
         Follow the instructions provided in that repo to download the .tfrecord files.
         """
         dataset = self._load_dataset(path, split)
-        dataset_iterator = tf.data.make_one_shot_iterator(dataset)
-        return dataset_iterator
+        return tf.data.make_one_shot_iterator(dataset)
 
     def _load_dataset(self, path, split):
         with open(os.path.join(path, "meta.json"), "r") as fp:
             meta = json.loads(fp.read())
-        dataset = tf.data.TFRecordDataset(os.path.join(path, split + ".tfrecord"))
+        dataset = tf.data.TFRecordDataset(os.path.join(path, f"{split}.tfrecord"))
         return dataset.map(
             functools.partial(self._parse_data, meta=meta), num_parallel_calls=8
         ).prefetch(tf.data.AUTOTUNE)
@@ -342,10 +338,7 @@ class VortexSheddingDataset(DGLDataset):
     @staticmethod
     def denormalize(invar, mu, std):
         """denormalizes a tensor"""
-        # assert invar.size()[-1] == mu.size()[-1]
-        # assert invar.size()[-1] == std.size()[-1]
-        denormalized_invar = invar * std + mu
-        return denormalized_invar
+        return invar * std + mu
 
     @staticmethod
     def _one_hot_encode(node_type):  # TODO generalize
@@ -360,7 +353,7 @@ class VortexSheddingDataset(DGLDataset):
 
     @staticmethod
     def _drop_last(invar):
-        return torch.tensor(invar[0:-1], dtype=torch.float)
+        return torch.tensor(invar[:-1], dtype=torch.float)
 
     @staticmethod
     def _push_forward(invar):
@@ -368,18 +361,17 @@ class VortexSheddingDataset(DGLDataset):
 
     @staticmethod
     def _push_forward_diff(invar):
-        return torch.tensor(invar[1:] - invar[0:-1], dtype=torch.float)
+        return torch.tensor(invar[1:] - invar[:-1], dtype=torch.float)
 
     @staticmethod
     def _get_rollout_mask(node_type):
-        mask = torch.logical_or(
+        return torch.logical_or(
             torch.eq(node_type, torch.zeros_like(node_type)),
             torch.eq(
                 node_type,
                 torch.zeros_like(node_type) + 5,
             ),
         )
-        return mask
 
     @staticmethod
     def _add_noise(features, targets, noise_std, noise_mask):
@@ -404,7 +396,8 @@ class VortexSheddingDataset(DGLDataset):
                 data = tf.tile(data, [meta["trajectory_length"], 1, 1])
             elif v["type"] == "dynamic_varlen":
                 row_len = tf.reshape(
-                    tf.io.decode_raw(features["length_" + k].values, tf.int32), [-1]
+                    tf.io.decode_raw(features[f"length_{k}"].values, tf.int32),
+                    [-1],
                 )
                 data = tf.RaggedTensor.from_row_lengths(data, row_lengths=row_len)
             outvar[k] = data

@@ -45,7 +45,7 @@ def log_to_file(
     log.addHandler(fh)
 
 
-def log_versions():  # pragma: no cover
+def log_versions():    # pragma: no cover
 
     """
     Log the versions of git and torch.
@@ -53,7 +53,7 @@ def log_versions():  # pragma: no cover
     import torch
 
     logging.info("--------------- Versions ---------------")
-    logging.info("Torch: " + str(torch.__version__))
+    logging.info(f"Torch: {str(torch.__version__)}")
     logging.info("----------------------------------------")
 
 

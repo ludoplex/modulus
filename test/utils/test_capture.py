@@ -235,8 +235,8 @@ def test_capture_scaler_checkpointing_ordering(model, model2, device):
     # Change instantiation order
     capture2b = StaticCaptureTraining(model=model2, optim=optim2, label="capture2")
     capture1b = StaticCaptureTraining(model=model, optim=optim, label="capture1")
-    assert not capture1a.scaler.state_dict() == capture1b.scaler.state_dict()
-    assert not capture2a.scaler.state_dict() == capture2b.scaler.state_dict()
+    assert capture1a.scaler.state_dict() != capture1b.scaler.state_dict()
+    assert capture2a.scaler.state_dict() != capture2b.scaler.state_dict()
     # Load state dict
     _StaticCapture.load_state_dict(state_dict)
 

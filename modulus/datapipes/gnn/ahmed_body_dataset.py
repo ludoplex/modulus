@@ -133,7 +133,7 @@ class AhmedBodyDataset(DGLDataset, Datapipe):
         self.split = split
         self.num_samples = num_samples
         self.data_dir = os.path.join(data_dir, self.split)
-        self.info_dir = os.path.join(data_dir, self.split + "_info")
+        self.info_dir = os.path.join(data_dir, f"{self.split}_info")
         self.input_keys = invar_keys
         self.output_keys = outvar_keys
         self.normalization_bound = normalization_bound
@@ -156,13 +156,11 @@ class AhmedBodyDataset(DGLDataset, Datapipe):
 
         numbers = []
         for directory in data_list:
-            match = re.search(r"\d+", directory)
-            if match:
+            if match := re.search(r"\d+", directory):
                 numbers.append(int(match.group()))
         numbers_info = []
         for directory in info_list:
-            match = re.search(r"\d+", directory)
-            if match:
+            if match := re.search(r"\d+", directory):
                 numbers_info.append(int(match.group()))
         numbers = [int(n) for n in numbers]
         numbers_info = [int(n) for n in numbers_info]
@@ -246,17 +244,17 @@ class AhmedBodyDataset(DGLDataset, Datapipe):
                 mesh.compute_normals(
                     cell_normals=True, point_normals=False, inplace=True
                 )
-                if "normals" in invar_keys:
-                    graph.ndata["normals"] = torch.from_numpy(
-                        mesh.cell_data_to_point_data()["Normals"]
-                    )
-                if self.compute_drag:
-                    mesh = mesh.compute_cell_sizes()
-                    mesh = mesh.cell_data_to_point_data()
-                    frontal_area = width * height / 2 * (10 ** (-6))
-                    self.coeff.append(2.0 / ((velocity**2) * frontal_area))
-                    self.normals.append(torch.from_numpy(mesh["Normals"]))
-                    self.areas.append(torch.from_numpy(mesh["Area"]))
+            if "normals" in invar_keys:
+                graph.ndata["normals"] = torch.from_numpy(
+                    mesh.cell_data_to_point_data()["Normals"]
+                )
+            if self.compute_drag:
+                mesh = mesh.compute_cell_sizes()
+                mesh = mesh.cell_data_to_point_data()
+                frontal_area = width * height / 2 * (10 ** (-6))
+                self.coeff.append(2.0 / ((velocity**2) * frontal_area))
+                self.normals.append(torch.from_numpy(mesh["Normals"]))
+                self.areas.append(torch.from_numpy(mesh["Area"]))
             self.graphs.append(graph)
 
         # add the edge features
@@ -341,17 +339,15 @@ class AhmedBodyDataset(DGLDataset, Datapipe):
                 "The 'node_stats' attribute does not exist or is not a dictionary."
             )
 
-        invar_keys = set(
-            [
-                key.replace("_min", "").replace("_max", "")
-                for key in self.node_stats.keys()
-            ]
-        )
+        invar_keys = {
+            key.replace("_min", "").replace("_max", "")
+            for key in self.node_stats.keys()
+        }
 
         for graph in self.graphs:
             for key in invar_keys:
-                node_min = self.node_stats.get(key + "_min")
-                node_max = self.node_stats.get(key + "_max")
+                node_min = self.node_stats.get(f"{key}_min")
+                node_max = self.node_stats.get(f"{key}_max")
 
                 if node_min is None or node_max is None:
                     raise ValueError(
@@ -553,8 +549,8 @@ class AhmedBodyDataset(DGLDataset, Datapipe):
                     f"The key '{key}' does not exist in the node data of the first graph."
                 )
 
-            stats[key + "_min"] = torch.full_like(first_node_data[0, :], float("inf"))
-            stats[key + "_max"] = torch.full_like(first_node_data[0, :], float("-inf"))
+            stats[f"{key}_min"] = torch.full_like(first_node_data[0, :], float("inf"))
+            stats[f"{key}_max"] = torch.full_like(first_node_data[0, :], float("-inf"))
 
         for i in range(len(self.graphs)):
             for key in keys:
@@ -568,8 +564,8 @@ class AhmedBodyDataset(DGLDataset, Datapipe):
                 max_val, _ = node_data.max(dim=0)
                 min_val, max_val = min_val.reshape(-1), max_val.reshape(-1)
 
-                stats[key + "_min"] = torch.minimum(stats[key + "_min"], min_val)
-                stats[key + "_max"] = torch.maximum(stats[key + "_max"], max_val)
+                stats[f"{key}_min"] = torch.minimum(stats[f"{key}_min"], min_val)
+                stats[f"{key}_max"] = torch.maximum(stats[f"{key}_max"], max_val)
 
         # Save to file
         save_json(stats, "node_stats.json")
@@ -675,12 +671,13 @@ class AhmedBodyDataset(DGLDataset, Datapipe):
 
         polys.InitTraversal()
         edge_list = []
-        for i in range(polys.GetNumberOfCells()):
+        for _ in range(polys.GetNumberOfCells()):
             id_list = vtk.vtkIdList()
             polys.GetNextCell(id_list)
-            for j in range(id_list.GetNumberOfIds() - 1):
-                edge_list.append((id_list.GetId(j), id_list.GetId(j + 1)))
-
+            edge_list.extend(
+                (id_list.GetId(j), id_list.GetId(j + 1))
+                for j in range(id_list.GetNumberOfIds() - 1)
+            )
         # Create DGL graph using the connectivity information
         graph = dgl.graph(edge_list, idtype=dtype)
         if to_bidirected:

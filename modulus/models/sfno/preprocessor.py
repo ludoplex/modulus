@@ -92,12 +92,8 @@ class Preprocessor2D(nn.Module):
         # set up grid
         if params.add_grid:
             with torch.no_grad():
-                tx = torch.linspace(0, 1, params.img_shape_x + 1, dtype=torch.float32)[
-                    0:-1
-                ]
-                ty = torch.linspace(0, 1, params.img_shape_y + 1, dtype=torch.float32)[
-                    0:-1
-                ]
+                tx = torch.linspace(0, 1, params.img_shape_x + 1, dtype=torch.float32)[:-1]
+                ty = torch.linspace(0, 1, params.img_shape_y + 1, dtype=torch.float32)[:-1]
 
                 x_grid, y_grid = torch.meshgrid(tx, ty, indexing="ij")
                 x_grid, y_grid = x_grid.unsqueeze(0).unsqueeze(0), y_grid.unsqueeze(
@@ -208,7 +204,7 @@ class Preprocessor2D(nn.Module):
             x = x[:, : x.shape[1] - nfeat, :, :]
         return x
 
-    def append_history(self, x1, x2, step):  # pragma: no cover
+    def append_history(self, x1, x2, step):    # pragma: no cover
         """
         Appends history to the main input.
         Without history, just returns the second tensor (x2).
@@ -233,19 +229,18 @@ class Preprocessor2D(nn.Module):
                             [self.unpredicted_inp_train[:, 1:, :, :, :], utar], dim=1
                         )
                     )
-        else:
-            if (self.unpredicted_tar_eval is not None) and (
+        elif (self.unpredicted_tar_eval is not None) and (
                 step < self.unpredicted_tar_eval.shape[1]
             ):
-                utar = self.unpredicted_tar_eval[:, step : (step + 1), :, :, :]
-                if self.n_history == 0:
-                    self.unpredicted_inp_eval.copy_(utar)
-                else:
-                    self.unpredicted_inp_eval.copy_(
-                        torch.cat(
-                            [self.unpredicted_inp_eval[:, 1:, :, :, :], utar], dim=1
-                        )
+            utar = self.unpredicted_tar_eval[:, step : (step + 1), :, :, :]
+            if self.n_history == 0:
+                self.unpredicted_inp_eval.copy_(utar)
+            else:
+                self.unpredicted_inp_eval.copy_(
+                    torch.cat(
+                        [self.unpredicted_inp_eval[:, 1:, :, :, :], utar], dim=1
                     )
+                )
 
         # without history, just return the second tensor
         if self.n_history > 0:
@@ -481,17 +476,16 @@ class Preprocessor2D(nn.Module):
 
         return x, y
 
-    def append_unpredicted_features(self, inp):  # pragma: no cover
+    def append_unpredicted_features(self, inp):    # pragma: no cover
         """Appends features not predicted by the model (such as zenith angle) from the input"""
         if self.training:
             if self.unpredicted_inp_train is not None:
                 inp = self.append_channels(inp, self.unpredicted_inp_train)
-        else:
-            if self.unpredicted_inp_eval is not None:
-                inp = self.append_channels(inp, self.unpredicted_inp_eval)
+        elif self.unpredicted_inp_eval is not None:
+            inp = self.append_channels(inp, self.unpredicted_inp_eval)
         return inp
 
-    def remove_unpredicted_features(self, inp):  # pragma: no cover
+    def remove_unpredicted_features(self, inp):    # pragma: no cover
         """Removes features not predicted by the model (such as zenith angle) from the input"""
         if self.training:
             if self.unpredicted_inp_train is not None:
@@ -500,13 +494,12 @@ class Preprocessor2D(nn.Module):
                     :, :, : inpf.shape[2] - self.unpredicted_inp_train.shape[2], :, :
                 ]
                 inp = self.flatten_history(inpc)
-        else:
-            if self.unpredicted_inp_eval is not None:
-                inpf = self.expand_history(inp, nhist=self.n_history + 1)
-                inpc = inpf[
-                    :, :, : inpf.shape[2] - self.unpredicted_inp_eval.shape[2], :, :
-                ]
-                inp = self.flatten_history(inpc)
+        elif self.unpredicted_inp_eval is not None:
+            inpf = self.expand_history(inp, nhist=self.n_history + 1)
+            inpc = inpf[
+                :, :, : inpf.shape[2] - self.unpredicted_inp_eval.shape[2], :, :
+            ]
+            inp = self.flatten_history(inpc)
 
         return inp
 

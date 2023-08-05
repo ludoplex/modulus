@@ -51,13 +51,10 @@ def linspace(start: Tensor, stop: Tensor, num: int) -> Tensor:
     # - using 'steps.reshape([-1, *([1]*start.ndim)])' would be nice here but
     #  torchscript "cannot statically infer the expected size of a list in this contex",
     #  hence the code below
-    for i in range(start.ndim):
+    for _ in range(start.ndim):
         steps = steps.unsqueeze(-1)
 
-    # the output starts at 'start' and increments until 'stop' in each dimension
-    out = start[None] + steps * (stop - start)[None]
-
-    return out
+    return start[None] + steps * (stop - start)[None]
 
 
 @torch.jit.script
@@ -295,7 +292,7 @@ def _get_mins_maxs(*inputs: Tensor, axis: int = 0) -> Tuple[Tensor, Tensor]:
     Tuple[Tensor, Tensor]
         (Minimum, Maximum) values of inputs
     """
-    assert len(inputs) > 0, "At least one tensor much be provided"
+    assert inputs, "At least one tensor much be provided"
 
     input = inputs[0]
     inputs = list(inputs)[1:]
@@ -479,7 +476,6 @@ def _compute_counts_cdf(
             counts = None
             for input in inputs:
                 counts = _count_bins(input, bin_edges, counts=counts, cdf=cdf)
-            return bin_edges, counts
         else:  # Counts do need to be update
             if verbose:
                 print("Counts are being updated.")
@@ -487,7 +483,7 @@ def _compute_counts_cdf(
                 bin_edges, counts = _update_bins_counts(
                     input, bin_edges, counts, cdf=cdf
                 )
-            return bin_edges, counts
+        return bin_edges, counts
     else:
         raise ValueError("Input bin type is not supported.")
 
@@ -640,11 +636,10 @@ class Histogram(EnsembleMetrics):
 
             self.counts = _count_bins(input, self.bin_edges)
             dist.all_reduce(self.counts, op=dist.ReduceOp.SUM)
-            return self.bin_edges, self.counts
-
         else:
             self.bin_edges, self.counts = histogram(input, bins=self.number_of_bins)
-            return self.bin_edges, self.counts
+
+        return self.bin_edges, self.counts
 
     def update(self, input: Tensor) -> Tuple[Tensor, Tensor]:
         """Update current histogram with new data
@@ -684,11 +679,10 @@ class Histogram(EnsembleMetrics):
         # Normalize counts
         hist_norm = self.counts.sum(dim=0)
         self.pdf = self.counts / hist_norm
-        if cdf:
-            self.cdf = torch.cumsum(self.pdf, dim=0)
-            return self.bin_edges, self.cdf
-        else:
+        if not cdf:
             return self.bin_edges, self.pdf
+        self.cdf = torch.cumsum(self.pdf, dim=0)
+        return self.bin_edges, self.cdf
 
 
 def normal_pdf(

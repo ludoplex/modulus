@@ -142,10 +142,7 @@ def get_activation(activation: str) -> nn.Module:
     try:
         activation = activation.lower()
         module = ACT2FN[activation]
-        if isinstance(module, tuple):
-            return module[0](**module[1])
-        else:
-            return module()
+        return module[0](**module[1]) if isinstance(module, tuple) else module()
     except KeyError:
         raise KeyError(
             f"Activation function {activation} not found. Available options are: {list(ACT2FN.keys())}"

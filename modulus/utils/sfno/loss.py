@@ -241,7 +241,7 @@ class GeometricLpLoss(nn.Module):
 
     def abs(
         self, prd: torch.Tensor, tar: torch.Tensor, chw: torch.Tensor
-    ):  # pragma: no cover
+    ):    # pragma: no cover
         """Computes the absolute loss"""
         num_examples = prd.size()[0]
         if self.pole_mask:
@@ -269,11 +269,7 @@ class GeometricLpLoss(nn.Module):
         all_norms = chw.reshape(1, -1) * all_norms
 
         if self.reduction:
-            if self.size_average:
-                return torch.mean(all_norms)
-            else:
-                return torch.sum(all_norms)
-
+            return torch.mean(all_norms) if self.size_average else torch.sum(all_norms)
         return all_norms
 
     def rel(
@@ -282,7 +278,7 @@ class GeometricLpLoss(nn.Module):
         tar: torch.Tensor,
         chw: torch.Tensor,
         mask: Optional[torch.Tensor] = None,
-    ):  # pragma: no cover
+    ):    # pragma: no cover
         """Computes the relative loss"""
         num_examples = prd.size()[0]
 
@@ -317,10 +313,11 @@ class GeometricLpLoss(nn.Module):
 
         if self.reduction:
             if self.size_average:
-                if mask is None:
-                    retval = torch.mean(retval)
-                else:
-                    retval = torch.sum(retval) / torch.sum(mask)
+                retval = (
+                    torch.mean(retval)
+                    if mask is None
+                    else torch.sum(retval) / torch.sum(mask)
+                )
             else:
                 retval = torch.sum(retval)
 
@@ -333,12 +330,11 @@ class GeometricLpLoss(nn.Module):
         chw: torch.Tensor,
         mask: Optional[torch.Tensor] = None,
     ):  # pragma: no cover
-        if self.absolute:
-            loss = self.abs(prd, tar, chw)
-        else:
-            loss = self.rel(prd, tar, chw, mask)
-
-        return loss
+        return (
+            self.abs(prd, tar, chw)
+            if self.absolute
+            else self.rel(prd, tar, chw, mask)
+        )
 
 
 # double check if polar optimization has an effect - we use 5 here by default
@@ -368,7 +364,7 @@ class GeometricH1Loss(nn.Module):
         h1_weights = h1_weights * (h1_weights + 1)
         self.register_buffer("h1_weights", h1_weights)
 
-    def abs(self, prd: torch.Tensor, tar: torch.Tensor):  # pragma: no cover
+    def abs(self, prd: torch.Tensor, tar: torch.Tensor):    # pragma: no cover
         """Computes the absolute loss"""
         num_examples = prd.size()[0]
 
@@ -386,16 +382,12 @@ class GeometricH1Loss(nn.Module):
             all_norms = self.alpha * l2_norm2 + (1 - self.alpha) * h1_norm2
 
         if self.reduction:
-            if self.size_average:
-                return torch.mean(all_norms)
-            else:
-                return torch.sum(all_norms)
-
+            return torch.mean(all_norms) if self.size_average else torch.sum(all_norms)
         return all_norms
 
     def rel(
         self, prd: torch.Tensor, tar: torch.Tensor, mask: Optional[torch.Tensor] = None
-    ):  # pragma: no cover
+    ):    # pragma: no cover
         """Computes the relative loss"""
         num_examples = prd.size()[0]
 
@@ -433,10 +425,11 @@ class GeometricH1Loss(nn.Module):
 
         if self.reduction:
             if self.size_average:
-                if mask is None:
-                    retval = torch.mean(retval)
-                else:
-                    retval = torch.sum(retval) / torch.sum(mask)
+                retval = (
+                    torch.mean(retval)
+                    if mask is None
+                    else torch.sum(retval) / torch.sum(mask)
+                )
             else:
                 retval = torch.sum(retval)
 
@@ -445,9 +438,4 @@ class GeometricH1Loss(nn.Module):
     def forward(
         self, prd: torch.Tensor, tar: torch.Tensor, mask: Optional[torch.Tensor] = None
     ):  # pragma: no cover
-        if self.absolute:
-            loss = self.abs(prd, tar)
-        else:
-            loss = self.rel(prd, tar, mask)
-
-        return loss
+        return self.abs(prd, tar) if self.absolute else self.rel(prd, tar, mask)

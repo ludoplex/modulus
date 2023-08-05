@@ -36,7 +36,7 @@ def get_disagreements(inputs, bins, counts, test):
     """
     sum_counts = torch.sum(counts, dim=0)
     disagreements = torch.nonzero(sum_counts != test, as_tuple=True)
-    print("Disagreements: ", str(disagreements))
+    print("Disagreements: ", disagreements)
 
     number_of_disagree = len(disagreements[0])
     for i in range(number_of_disagree):

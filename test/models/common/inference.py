@@ -84,7 +84,7 @@ def validate_onnx_export(
     device = model.device
     # Turn on eval mode for model and move it to CPU for export
     model = model.eval().cpu()
-    onnx_in_args = tuple([arg.cpu() for arg in in_args])
+    onnx_in_args = tuple(arg.cpu() for arg in in_args)
     torch.onnx.export(
         model.cpu(),
         onnx_in_args,
@@ -103,7 +103,7 @@ def validate_onnx_export(
         Path(onnx_name).unlink(missing_ok=False)
         return True
     except onnx.checker.ValidationError as e:
-        logger.error("Loaded ONNX model is not well formed: %s" % e)
+        logger.error(f"Loaded ONNX model is not well formed: {e}")
         # Delete checkpoint file (it should exist!)
         Path(onnx_name).unlink(missing_ok=False)
         return False

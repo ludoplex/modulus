@@ -49,10 +49,10 @@ def _pad_periodically_equatorial(
     bottom_pad = torch.cat(
         (bottom_face[..., :, :size], bottom_face, bottom_face[..., :, -size:]), dim=-1
     )  # hacky - extend on the left and right side
-    padded_data = torch.cat(
-        (bottom_pad[..., -size:, :], padded_data_temp, top_pad[..., :size, :]), dim=-2
+    return torch.cat(
+        (bottom_pad[..., -size:, :], padded_data_temp, top_pad[..., :size, :]),
+        dim=-2,
     )
-    return padded_data
 
 
 def _pad_periodically_polar(
@@ -76,10 +76,10 @@ def _pad_periodically_polar(
     right_pad = torch.cat(
         (right_face[..., :size, :], right_face, right_face[..., -size:, :]), dim=-2
     )  # hacky - extend the left and right
-    padded_data = torch.cat(
-        (left_pad[..., :, -size:], padded_data_temp, right_pad[..., :, :size]), dim=-1
+    return torch.cat(
+        (left_pad[..., :, -size:], padded_data_temp, right_pad[..., :, :size]),
+        dim=-1,
     )
-    return padded_data
 
 
 def _cubed_conv_wrapper(faces, equator_conv, polar_conv):
@@ -89,80 +89,8 @@ def _cubed_conv_wrapper(faces, equator_conv, polar_conv):
     )
     padding_size = padding_size // 2
     output = []
-    if padding_size != 0:
-        for i in range(6):
-            if i == 0:
-                x = _pad_periodically_equatorial(
-                    faces[0],
-                    faces[3],
-                    faces[1],
-                    faces[5],
-                    faces[4],
-                    nr_rot=0,
-                    size=padding_size,
-                )
-                output.append(equator_conv(x))
-            elif i == 1:
-                x = _pad_periodically_equatorial(
-                    faces[1],
-                    faces[0],
-                    faces[2],
-                    faces[5],
-                    faces[4],
-                    nr_rot=1,
-                    size=padding_size,
-                )
-                output.append(equator_conv(x))
-            elif i == 2:
-                x = _pad_periodically_equatorial(
-                    faces[2],
-                    faces[1],
-                    faces[3],
-                    faces[5],
-                    faces[4],
-                    nr_rot=2,
-                    size=padding_size,
-                )
-                output.append(equator_conv(x))
-            elif i == 3:
-                x = _pad_periodically_equatorial(
-                    faces[3],
-                    faces[2],
-                    faces[0],
-                    faces[5],
-                    faces[4],
-                    nr_rot=3,
-                    size=padding_size,
-                )
-                output.append(equator_conv(x))
-            elif i == 4:
-                x = _pad_periodically_polar(
-                    faces[4],
-                    faces[3],
-                    faces[1],
-                    faces[0],
-                    faces[5],
-                    rot_axis_left=(-1, -2),
-                    rot_axis_right=(-2, -1),
-                    size=padding_size,
-                )
-                output.append(polar_conv(x))
-            else:  # i=5
-                x = _pad_periodically_polar(
-                    faces[5],
-                    faces[3],
-                    faces[1],
-                    faces[4],
-                    faces[0],
-                    rot_axis_left=(-2, -1),
-                    rot_axis_right=(-1, -2),
-                    size=padding_size,
-                )
-                x = torch.flip(x, [-1])
-                x = polar_conv(x)
-                output.append(torch.flip(x, [-1]))
-    else:
-        for i in range(6):
+    for i in range(6):
+        if padding_size == 0:
             if i in [0, 1, 2, 3]:
                 output.append(equator_conv(faces[i]))
             elif i == 4:
@@ -172,14 +100,81 @@ def _cubed_conv_wrapper(faces, equator_conv, polar_conv):
                 x = polar_conv(x)
                 output.append(torch.flip(x, [-1]))
 
+        elif i == 0:
+            x = _pad_periodically_equatorial(
+                faces[0],
+                faces[3],
+                faces[1],
+                faces[5],
+                faces[4],
+                nr_rot=0,
+                size=padding_size,
+            )
+            output.append(equator_conv(x))
+        elif i == 1:
+            x = _pad_periodically_equatorial(
+                faces[1],
+                faces[0],
+                faces[2],
+                faces[5],
+                faces[4],
+                nr_rot=1,
+                size=padding_size,
+            )
+            output.append(equator_conv(x))
+        elif i == 2:
+            x = _pad_periodically_equatorial(
+                faces[2],
+                faces[1],
+                faces[3],
+                faces[5],
+                faces[4],
+                nr_rot=2,
+                size=padding_size,
+            )
+            output.append(equator_conv(x))
+        elif i == 3:
+            x = _pad_periodically_equatorial(
+                faces[3],
+                faces[2],
+                faces[0],
+                faces[5],
+                faces[4],
+                nr_rot=3,
+                size=padding_size,
+            )
+            output.append(equator_conv(x))
+        elif i == 4:
+            x = _pad_periodically_polar(
+                faces[4],
+                faces[3],
+                faces[1],
+                faces[0],
+                faces[5],
+                rot_axis_left=(-1, -2),
+                rot_axis_right=(-2, -1),
+                size=padding_size,
+            )
+            output.append(polar_conv(x))
+        else:
+            x = _pad_periodically_polar(
+                faces[5],
+                faces[3],
+                faces[1],
+                faces[4],
+                faces[0],
+                rot_axis_left=(-2, -1),
+                rot_axis_right=(-1, -2),
+                size=padding_size,
+            )
+            x = torch.flip(x, [-1])
+            x = polar_conv(x)
+            output.append(torch.flip(x, [-1]))
     return output
 
 
 def _cubed_non_conv_wrapper(faces, layer):
-    output = []
-    for i in range(6):
-        output.append(layer(faces[i]))
-    return output
+    return [layer(faces[i]) for i in range(6)]
 
 
 @dataclass
@@ -284,12 +279,8 @@ class DLWP(Module):
             self.polar_downsample.append(nn.Conv2d(outs, outs, kernel_size=3))
 
         for i in range(2):
-            if i == 0:
-                ins = outs
-                outs = ins * 2
-            else:
-                ins = outs
-                outs = ins // 2
+            ins = outs
+            outs = ins * 2 if i == 0 else ins // 2
             self.equatorial_mid_layers.append(nn.Conv2d(ins, outs, kernel_size=3))
             self.polar_mid_layers.append(nn.Conv2d(ins, outs, kernel_size=3))
 
@@ -350,9 +341,7 @@ class DLWP(Module):
                 encoder_states.append(faces)
                 faces = _cubed_non_conv_wrapper(faces, self.avg_pool)
 
-        for i, (equatorial_layer, polar_layer) in enumerate(
-            zip(self.equatorial_mid_layers, self.polar_mid_layers)
-        ):
+        for equatorial_layer, polar_layer in zip(self.equatorial_mid_layers, self.polar_mid_layers):
             faces = _cubed_conv_wrapper(faces, equatorial_layer, polar_layer)
             faces = _cubed_non_conv_wrapper(faces, self.activation)
 
@@ -372,6 +361,4 @@ class DLWP(Module):
             faces = _cubed_non_conv_wrapper(faces, self.activation)
 
         faces = _cubed_conv_wrapper(faces, self.equatorial_last, self.polar_last)
-        output = torch.stack(faces, dim=2)
-
-        return output
+        return torch.stack(faces, dim=2)

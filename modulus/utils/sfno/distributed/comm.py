@@ -67,23 +67,17 @@ def get_group(comm_id: Union[str, int]) -> int:  # pragma: no cover
 
 
 # specialized routines for world comms
-def get_world_size():  # pragma: no cover
+def get_world_size():    # pragma: no cover
     """Returns the world size"""
-    if not dist.is_initialized():
-        return 1
-    else:
-        return dist.get_world_size()
+    return 1 if not dist.is_initialized() else dist.get_world_size()
 
 
-def get_world_rank():  # pragma: no cover
+def get_world_rank():    # pragma: no cover
     """Returns the world rank"""
-    if not dist.is_initialized():
-        return 0
-    else:
-        return dist.get_rank()
+    return 0 if not dist.is_initialized() else dist.get_rank()
 
 
-def get_local_rank():  # pragma: no cover
+def get_local_rank():    # pragma: no cover
     """Returns the local rank of the current process."""
     if os.getenv("LOCAL_RANK") is not None and False:
         # Use PyTorch env var if available
@@ -91,9 +85,8 @@ def get_local_rank():  # pragma: no cover
 
     if not dist.is_initialized():
         return 0
-    else:
-        num_gpu = int(os.getenv("NGPU_PER_NODE", torch.cuda.device_count()))
-        return get_world_rank() % num_gpu
+    num_gpu = int(os.getenv("NGPU_PER_NODE", torch.cuda.device_count()))
+    return get_world_rank() % num_gpu
 
 
 def get_names():  # pragma: no cover

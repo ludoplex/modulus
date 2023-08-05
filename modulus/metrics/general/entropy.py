@@ -49,31 +49,22 @@ def _entropy_from_counts(p: Tensor, bin_edges: Tensor, normalized=True) -> Tenso
     Tensor
         Tensor containing the Information/Statistical Entropy
     """
-    assert bin_edges.shape[1:] == p.shape[1:], (
-        "Expected bins and pdf to have compatible non-zeroth dimensions but have shapes"
-        + str(bin_edges.shape[1:])
-        + " and "
-        + str(p.shape[1:])
-        + "."
-    )
-    assert bin_edges.shape[0] == p.shape[0] + 1, (
-        "Expected zeroth dimension of cdf to be equal to the zeroth dimension of bins + 1 but have shapes"
-        + str(bin_edges.shape[0])
-        + " and "
-        + str(p.shape[0])
-        + "+1."
-    )
+    assert (
+        bin_edges.shape[1:] == p.shape[1:]
+    ), f"Expected bins and pdf to have compatible non-zeroth dimensions but have shapes{str(bin_edges.shape[1:])} and {str(p.shape[1:])}."
+    assert (
+        bin_edges.shape[0] == p.shape[0] + 1
+    ), f"Expected zeroth dimension of cdf to be equal to the zeroth dimension of bins + 1 but have shapes{str(bin_edges.shape[0])} and {str(p.shape[0])}+1."
     dbins = bin_edges[1:] - bin_edges[:-1]
     bin_mids = 0.5 * (bin_edges[1:] + bin_edges[:-1])
     p = p / torch.trapz(p, bin_mids, dim=0) + 1e-8
 
     ent = torch.trapz(-1.0 * p * torch.log(p), bin_mids, dim=0)
-    if normalized:
-        max_ent = torch.log(bin_edges[-1] - bin_edges[0])
-        min_ent = 0.5 + 0.5 * torch.log(2 * torch.pi * dbins[0] ** 2)
-        return (ent - min_ent) / (max_ent - min_ent)
-    else:
+    if not normalized:
         return ent
+    max_ent = torch.log(bin_edges[-1] - bin_edges[0])
+    min_ent = 0.5 + 0.5 * torch.log(2 * torch.pi * dbins[0] ** 2)
+    return (ent - min_ent) / (max_ent - min_ent)
 
 
 def _relative_entropy_from_counts(

@@ -86,11 +86,7 @@ class FullyConnected(Module):
 
         self.skip_connections = skip_connections
 
-        if adaptive_activations:
-            activation_par = nn.Parameter(torch.ones(1))
-        else:
-            activation_par = None
-
+        activation_par = nn.Parameter(torch.ones(1)) if adaptive_activations else None
         if not isinstance(activation_fn, list):
             activation_fn = [activation_fn] * num_layers
         if len(activation_fn) < num_layers:

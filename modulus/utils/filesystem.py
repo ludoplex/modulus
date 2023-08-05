@@ -66,8 +66,7 @@ def _download_cached(path: str, recursive: bool = False) -> str:
                     if chunk:
                         output.write(chunk)
         elif url.scheme == "file":
-            path = os.path.join(url.netloc, url.path)
-            return path
+            return os.path.join(url.netloc, url.path)
         else:
             return path
 

@@ -109,10 +109,7 @@ class One2ManyRNN(Module):
         for i in range(nr_downsamples):
             for j in range(nr_residual_blocks):
                 stride = 1
-                if i == 0 and j == 0:
-                    channels_in = input_channels
-                else:
-                    channels_in = channels_out
+                channels_in = input_channels if i == 0 and j == 0 else channels_out
                 if (j == nr_residual_blocks - 1) and (i < nr_downsamples - 1):
                     channels_out = channels_out * 2
                     stride = 2
@@ -124,7 +121,7 @@ class One2ManyRNN(Module):
                         dimension=dimension,
                         gated=True,
                         layer_normalization=False,
-                        begin_activation_fn=not ((i == 0) and (j == 0)),
+                        begin_activation_fn=i != 0 or j != 0,
                         activation_fn=activation_fn,
                     )
                 )
@@ -157,7 +154,7 @@ class One2ManyRNN(Module):
                         dimension=dimension,
                         gated=True,
                         layer_normalization=False,
-                        begin_activation_fn=not ((i == 0) and (j == 0)),
+                        begin_activation_fn=i != 0 or j != 0,
                         activation_fn=activation_fn,
                     )
                 )
@@ -235,5 +232,4 @@ class One2ManyRNN(Module):
             out = self.final_conv(latent_context_grid[-1])
             decoded_output.append(out)
 
-        decoded_output = torch.stack(decoded_output, dim=2)
-        return decoded_output
+        return torch.stack(decoded_output, dim=2)

@@ -65,11 +65,7 @@ class CustomSiLuLinearAutogradFunction(torch.autograd.Function):
 
         grad_features = None
         grad_weight = None
-        grad_bias = None
-
-        if need_bgrad:
-            grad_bias = grad_output.sum(dim=0)
-
+        grad_bias = grad_output.sum(dim=0) if need_bgrad else None
         if need_wgrad:
             out = F.silu(features)
             grad_weight = grad_output.T @ out
@@ -128,13 +124,13 @@ class MeshGraphMLP(nn.Module):
 
         self.norm_type = norm_type
         if norm_type is not None:
-            assert norm_type in [
+            assert norm_type in {
                 "LayerNorm",
                 "GraphNorm",
                 "InstanceNorm",
                 "BatchNorm",
                 "MessageNorm",
-            ]
+            }
             if norm_type == "LayerNorm" and apex_imported:
                 norm_layer = FusedLayerNorm
             else:
@@ -313,11 +309,7 @@ class MeshGraphEdgeMLPSum(nn.Module):
         self.lin_src = nn.Parameter(w_src)
         self.lin_dst = nn.Parameter(w_dst)
 
-        if bias:
-            self.bias = tmp_lin.bias
-        else:
-            self.bias = None
-
+        self.bias = tmp_lin.bias if bias else None
         layers = [activation_fn]
         self.hidden_layers = hidden_layers
         for _ in range(hidden_layers - 1):
@@ -326,13 +318,13 @@ class MeshGraphEdgeMLPSum(nn.Module):
 
         self.norm_type = norm_type
         if norm_type is not None:
-            assert norm_type in [
+            assert norm_type in {
                 "LayerNorm",
                 "GraphNorm",
                 "InstanceNorm",
                 "BatchNorm",
                 "MessageNorm",
-            ]
+            }
             if norm_type == "LayerNorm" and apex_imported:
                 norm_layer = FusedLayerNorm
             else:
@@ -358,15 +350,11 @@ class MeshGraphEdgeMLPSum(nn.Module):
          total sum, too. Having it in one F.linear should allow a fusion of the bias
          addition while avoiding adding the bias to the "edge-level" result.
         """
-        if isinstance(nfeat, Tensor):
-            src_feat, dst_feat = nfeat, nfeat
-        else:
-            src_feat, dst_feat = nfeat
+        src_feat, dst_feat = (nfeat, nfeat) if isinstance(nfeat, Tensor) else nfeat
         mlp_efeat = F.linear(efeat, self.lin_efeat, None)
         mlp_src = F.linear(src_feat, self.lin_src, None)
         mlp_dst = F.linear(dst_feat, self.lin_dst, self.bias)
-        mlp_sum = sum_efeat(mlp_efeat, (mlp_src, mlp_dst), graph)
-        return mlp_sum
+        return sum_efeat(mlp_efeat, (mlp_src, mlp_dst), graph)
 
     def default_forward(
         self,

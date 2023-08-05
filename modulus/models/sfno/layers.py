@@ -31,7 +31,7 @@ from modulus.models.layers import get_activation
 @torch.jit.script
 def drop_path(
     x: torch.Tensor, drop_prob: float = 0.0, training: bool = False
-) -> torch.Tensor:  # pragma: no cover
+) -> torch.Tensor:    # pragma: no cover
     """Drop paths (Stochastic Depth) per sample (when applied in main path of
     residual blocks).
     This is the same as the DropConnect impl for EfficientNet, etc networks, however,
@@ -49,8 +49,7 @@ def drop_path(
     )  # work with diff dim tensors, not just 2d ConvNets
     random_tensor = keep_prob + torch.rand(shape, dtype=x.dtype, device=x.device)
     random_tensor.floor_()  # binarize
-    output = x.div(keep_prob) * random_tensor
-    return output
+    return x.div(keep_prob) * random_tensor
 
 
 class DropPath(nn.Module):
@@ -113,9 +112,13 @@ class EncoderDecoder(nn.Module):
 
         encoder_modules = []
         current_dim = input_dim
-        for i in range(num_layers):
-            encoder_modules.append(nn.Conv2d(current_dim, hidden_dim, 1, bias=True))
-            encoder_modules.append(get_activation(act))
+        for _ in range(num_layers):
+            encoder_modules.extend(
+                (
+                    nn.Conv2d(current_dim, hidden_dim, 1, bias=True),
+                    get_activation(act),
+                )
+            )
             current_dim = hidden_dim
         encoder_modules.append(nn.Conv2d(current_dim, output_dim, 1, bias=False))
         self.fwd = nn.Sequential(*encoder_modules)
@@ -160,10 +163,7 @@ class MLP(nn.Module):
         return checkpoint(self.fwd, x)
 
     def forward(self, x):  # pragma: no cover
-        if self.checkpointing >= 2:
-            return self.checkpoint_forward(x)
-        else:
-            return self.fwd(x)
+        return self.checkpoint_forward(x) if self.checkpointing >= 2 else self.fwd(x)
 
 
 class RealFFT2(nn.Module):
@@ -221,9 +221,7 @@ class InverseRealFFT2(nn.Module):
         self.mmax = mmax or self.nlon // 2 + 1
 
     def forward(self, x):  # pragma: no cover
-        out = self.ifft_handle(x, (self.nlat, self.nlon), (-2, -1), "ortho")
-
-        return out
+        return self.ifft_handle(x, (self.nlat, self.nlon), (-2, -1), "ortho")
 
 
 class SpectralConv2d(nn.Module):
@@ -357,8 +355,10 @@ class SpectralAttention2d(nn.Module):
         w = [self.scale * torch.randn(self.embed_dim, self.hidden_size, 2)]
         # w = [self.scale * torch.randn(self.embed_dim + 2*self.embed_freqs, self.hidden_size, 2)]
         # w = [self.scale * torch.randn(self.embed_dim + 4*self.embed_freqs, self.hidden_size, 2)]
-        for l in range(1, self.spectral_layers):
-            w.append(self.scale * torch.randn(self.hidden_size, self.hidden_size, 2))
+        w.extend(
+            self.scale * torch.randn(self.hidden_size, self.hidden_size, 2)
+            for _ in range(1, self.spectral_layers)
+        )
         self.w = nn.ParameterList(w)
 
         if bias:
@@ -475,8 +475,10 @@ class SpectralAttentionS2(nn.Module):
         )
         # weights
         w = [self.scale * torch.randn(self.embed_dim, self.hidden_size, 2)]
-        for l in range(1, self.spectral_layers):
-            w.append(self.scale * torch.randn(self.hidden_size, self.hidden_size, 2))
+        w.extend(
+            self.scale * torch.randn(self.hidden_size, self.hidden_size, 2)
+            for _ in range(1, self.spectral_layers)
+        )
         self.w = nn.ParameterList(w)
 
         if bias:

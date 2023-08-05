@@ -34,5 +34,4 @@ def create_random_input(input_res, dim):
 def get_icosphere_path():
     """Get path to icosphere mesh"""
     script_path = os.path.abspath(__file__)
-    icosphere_path = os.path.join(os.path.dirname(script_path), "icospheres.json")
-    return icosphere_path
+    return os.path.join(os.path.dirname(script_path), "icospheres.json")

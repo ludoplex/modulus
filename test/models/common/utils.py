@@ -69,7 +69,6 @@ def compare_output(
     # Output of tensor
     if isinstance(output_1, Tensor):
         return torch.allclose(output_1, output_2, rtol, atol)
-    # Output of tuple of tensors
     elif isinstance(output_1, tuple):
         # Loop through tuple of outputs
         for i, (out_1, out_2) in enumerate(zip(output_1, output_2)):
@@ -82,11 +81,8 @@ def compare_output(
                     )
                     logger.warning(f"Difference: {out_1 - out_2}")
                     return False
-            # Otherwise assume primative
-            else:
-                if not out_1 == out_2:
-                    return False
-    # Unsupported output type
+            elif out_1 != out_2:
+                return False
     else:
         logger.error(
             "Model returned invalid type for unit test, should be Tensor or Tuple[Tensor]"

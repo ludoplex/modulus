@@ -31,7 +31,7 @@ def get_memory_format(tensor):  # pragma: no cover
         return torch.contiguous_format
 
 
-def gather_uneven(tensor, dim, comm_name):  # pragma: no cover
+def gather_uneven(tensor, dim, comm_name):    # pragma: no cover
     """Helper routine to gather unevenly distributed tensors"""
 
     if comm.get_size(comm_name) == 1:
@@ -57,13 +57,10 @@ def gather_uneven(tensor, dim, comm_name):  # pragma: no cover
     tensor_list[comm.get_rank(comm_name)] = tensor
     dist.all_gather(tensor_list, tensor, group=comm.get_group(comm_name))
 
-    # concatenate
-    result = torch.cat(tensor_list, dim=dim)
-
-    return result
+    return torch.cat(tensor_list, dim=dim)
 
 
-def sync_params(model, mode="broadcast"):  # pragma: no cover
+def sync_params(model, mode="broadcast"):    # pragma: no cover
     """Helper routine to ensure shared weights are the same after initialization"""
 
     with torch.no_grad():
@@ -76,10 +73,7 @@ def sync_params(model, mode="broadcast"):  # pragma: no cover
             for comm_group in param.is_shared_mp:
                 if comm.get_size(comm_group) > 1:
                     if mode == "broadcast":
-                        tlist = [
-                            torch.empty_like(param)
-                            for x in range(comm.get_size(comm_group))
-                        ]
+                        tlist = [torch.empty_like(param) for _ in range(comm.get_size(comm_group))]
                         tlist[comm.get_rank(comm_group)] = param
                         # gather all weights in the comm group
                         dist.all_gather(tlist, param, group=comm.get_group(comm_group))
@@ -125,7 +119,7 @@ def pad_helper(tensor, dim, new_size, mode="zero"):  # pragma: no cover
     return tensor_pad
 
 
-def truncate_helper(tensor, dim, new_size):  # pragma: no cover
+def truncate_helper(tensor, dim, new_size):    # pragma: no cover
     """Helper routine to truncate a tensor along a given dimension"""
     input_format = get_memory_format(tensor)
     ndim = tensor.ndim
@@ -134,12 +128,10 @@ def truncate_helper(tensor, dim, new_size):  # pragma: no cover
         slice(0, x) if idx != dim else slice(0, new_size)
         for idx, x in enumerate(tensor.shape)
     ]
-    tensor_trunc = tensor[output_slice].contiguous(memory_format=input_format)
-
-    return tensor_trunc
+    return tensor[output_slice].contiguous(memory_format=input_format)
 
 
-def split_tensor_along_dim(tensor, dim, num_chunks):  # pragma: no cover
+def split_tensor_along_dim(tensor, dim, num_chunks):    # pragma: no cover
     """Helper routine to split a tensor along a given dimension"""
     assert (
         dim < tensor.dim()
@@ -149,9 +141,7 @@ def split_tensor_along_dim(tensor, dim, num_chunks):  # pragma: no cover
     ), f"Error, cannot split dim {dim} evenly. Dim size is \
                                                   {tensor.shape[dim]} and requested numnber of splits is {num_chunks}"
     chunk_size = tensor.shape[dim] // num_chunks
-    tensor_list = torch.split(tensor, chunk_size, dim=dim)
-
-    return tensor_list
+    return torch.split(tensor, chunk_size, dim=dim)
 
 
 # distributed primitives
@@ -196,7 +186,7 @@ def _reduce(input_, use_fp32=True, group=None):  # pragma: no cover
     return input_
 
 
-def _split(input_, dim_, group=None):  # pragma: no cover
+def _split(input_, dim_, group=None):    # pragma: no cover
     """Split the tensor along its last dimension and keep the corresponding slice."""
     # get input format
     input_format = get_memory_format(input_)
@@ -211,12 +201,10 @@ def _split(input_, dim_, group=None):  # pragma: no cover
 
     # Note: torch.split does not create contiguous tensors by default.
     rank = dist.get_rank(group=group)
-    output = input_list[rank].contiguous(memory_format=input_format)
-
-    return output
+    return input_list[rank].contiguous(memory_format=input_format)
 
 
-def _gather(input_, dim_, group=None):  # pragma: no cover
+def _gather(input_, dim_, group=None):    # pragma: no cover
     """Gather tensors and concatinate along the last dimension."""
     # get input format
     input_format = get_memory_format(input_)
@@ -239,7 +227,4 @@ def _gather(input_, dim_, group=None):  # pragma: no cover
     tensor_list[comm_rank] = input_
     dist.all_gather(tensor_list, input_, group=group)
 
-    # Note: torch.cat already creates a contiguous tensor.
-    output = torch.cat(tensor_list, dim=dim_).contiguous(memory_format=input_format)
-
-    return output
+    return torch.cat(tensor_list, dim=dim_).contiguous(memory_format=input_format)

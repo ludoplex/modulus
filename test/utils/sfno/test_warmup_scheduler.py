@@ -32,7 +32,7 @@ def test_warmup_scheduler():
     main_scheduler = lrs.CosineAnnealingLR(opt, num_steps, eta_min=0)
     scheduler = WarmupScheduler(main_scheduler, num_warmup, start_lr)
 
-    for epoch in range(num_steps + num_warmup):
+    for _ in range(num_steps + num_warmup):
         scheduler.step()
 
     sd = scheduler.state_dict()
