@@ -157,7 +157,7 @@ class Pix2Pix(Module):
         assert (
             n_blocks >= 0 and n_downsampling >= 0 and n_upsampling >= 0
         ), "Invalid arch params"
-        assert padding_type in ["reflect", "zero", "replicate"], "Invalid padding type"
+        assert padding_type in {"reflect", "zero", "replicate"}, "Invalid padding type"
         super().__init__(meta=MetaData())
 
         activation = get_activation(activation_fn)
@@ -208,7 +208,7 @@ class Pix2Pix(Module):
 
         ### resnet blocks
         mult = 2**n_downsampling
-        for i in range(n_blocks):
+        for _ in range(n_blocks):
             model += [
                 ResnetBlock(
                     dimension,
@@ -237,11 +237,11 @@ class Pix2Pix(Module):
             model.append(activation)
 
         # super-resolution layers
-        for i in range(max([0, n_upsampling - n_downsampling])):
+        for _ in range(max([0, n_upsampling - n_downsampling])):
             model.append(
                 trans_conv(
-                    int(conv_layer_size),
-                    int(conv_layer_size),
+                    conv_layer_size,
+                    conv_layer_size,
                     kernel_size=3,
                     stride=2,
                     padding=1,
@@ -259,8 +259,7 @@ class Pix2Pix(Module):
         self.model = nn.Sequential(*model)
 
     def forward(self, input: Tensor) -> Tensor:
-        y = self.model(input)
-        return y
+        return self.model(input)
 
 
 class ResnetBlock(nn.Module):
@@ -290,11 +289,11 @@ class ResnetBlock(nn.Module):
         use_dropout: bool = False,
     ):
         super().__init__()
-        assert padding_type in [
+        assert padding_type in {
             "reflect",
             "zero",
             "replicate",
-        ], f"Invalid padding type {padding_type}"
+        }, f"Invalid padding type {padding_type}"
 
         if dimension == 1:
             conv = nn.Conv1d
@@ -351,5 +350,4 @@ class ResnetBlock(nn.Module):
         self.conv_block = nn.Sequential(*conv_block)
 
     def forward(self, x: Tensor) -> Tensor:
-        out = x + self.conv_block(x)
-        return out
+        return x + self.conv_block(x)

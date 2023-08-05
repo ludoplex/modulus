@@ -56,7 +56,7 @@ class ComplexReLU(nn.Module):
             # bias is an angle parameter in this case
             modified_angle = torch.angle(z) - self.bias
             condition = torch.logical_and(
-                (0.0 <= modified_angle), (modified_angle < torch.pi / 2.0)
+                modified_angle >= 0.0, modified_angle < torch.pi / 2.0
             )
             out = torch.where(condition, z, self.negative_slope * z)
 
@@ -107,12 +107,10 @@ class ComplexActivation(nn.Module):
         if self.mode == "cartesian":
             zr = torch.view_as_real(z)
             za = self.act(zr)
-            out = torch.view_as_complex(za)
+            return torch.view_as_complex(za)
         elif self.mode == "modulus":
             zabs = torch.sqrt(torch.square(z.real) + torch.square(z.imag))
-            out = self.act(zabs + self.bias) * torch.exp(1.0j * z.angle())
+            return self.act(zabs + self.bias) * torch.exp(1.0j * z.angle())
         else:
             # identity
-            out = z
-
-        return out
+            return z

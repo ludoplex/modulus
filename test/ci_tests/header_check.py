@@ -43,21 +43,17 @@ def get_top_comments(_data):
         elif "from" in line:
             break
 
-    comments = []
-    for line in lines_to_extract:
-        comments.append(_data[line])
-
-    return comments
+    return [_data[line] for line in lines_to_extract]
 
 
 def main():
 
     with open(Path(__file__).parent.resolve() / Path("config.json")) as f:
         config = json.loads(f.read())
-    print(f"License check config:")
+    print("License check config:")
     print(json.dumps(config, sort_keys=True, indent=4))
 
-    current_year = int(datetime.today().year)
+    current_year = int(datetime.now().year)
     starting_year = 2023
     python_header_path = Path(__file__).parent.resolve() / Path(
         config["copyright_file"]
@@ -107,9 +103,7 @@ def main():
                         year_good = True
                         break
                     year_line_aff = year_line.split(".")
-                    year_line_aff = (
-                        year_line_aff[0] + " & AFFILIATES." + year_line_aff[1]
-                    )
+                    year_line_aff = f"{year_line_aff[0]} & AFFILIATES.{year_line_aff[1]}"
                     if year_line_aff in data[i]:
                         year_good = True
                         break
@@ -117,13 +111,13 @@ def main():
                     problematic_files.append(filename)
                     print(f"{filename} had an error with the year")
                     break
-                # while "opyright" in data[i]:
-                #    i += 1
-                # for j in range(1, pyheader_lines):
-                #    if pyheader[j] not in data[i + j - 1]:
-                #        problematic_files.append(filename)
-                #        print(f"{filename} missed the line: {pyheader[j]}")
-                #        break
+                            # while "opyright" in data[i]:
+                            #    i += 1
+                            # for j in range(1, pyheader_lines):
+                            #    if pyheader[j] not in data[i + j - 1]:
+                            #        problematic_files.append(filename)
+                            #        print(f"{filename} missed the line: {pyheader[j]}")
+                            #        break
             if found:
                 break
         if not found:
@@ -136,18 +130,18 @@ def main():
                 gpl_files.append(filename)
                 break
 
-    if len(problematic_files) > 0:
+    if problematic_files:
         print(
             "test_header.py found the following files that might not have a copyright header:"
         )
         for _file in problematic_files:
             print(_file)
-    if len(gpl_files) > 0:
+    if gpl_files:
         print("test_header.py found the following files that might have GPL copyright:")
         for _file in gpl_files:
             print(_file)
-    assert len(problematic_files) == 0, "header test failed!"
-    assert len(gpl_files) == 0, "found gpl license, header test failed!"
+    assert not problematic_files, "header test failed!"
+    assert not gpl_files, "found gpl license, header test failed!"
 
     print("Success: File headers look good!")
 

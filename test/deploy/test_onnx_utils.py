@@ -50,23 +50,20 @@ def check_ort_version():
 
 @pytest.fixture(params=["modulus", "pytorch"])
 def model(request) -> str:
-    # Create fully-connected NN to test exporting
-    if request.param == "modulus":
-        # Modulus version with meta data
-        model = FullyConnected(
+    return (
+        FullyConnected(
             in_features=32,
             out_features=8,
             num_layers=1,
             layer_size=8,
         )
-    else:
-        # PyTorch version
-        model = nn.Sequential(
+        if request.param == "modulus"
+        else nn.Sequential(
             nn.Linear(32, 8),
             nn.ReLU(),
             nn.Linear(8, 8),
         )
-    return model
+    )
 
 
 @check_ort_version()

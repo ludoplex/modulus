@@ -326,9 +326,7 @@ class _ConvGRULayer(nn.Module):
         update_gate = torch.special.expit(conv_z)
         concat = torch.cat((x, torch.mul(hidden, reset_gate)), dim=1)
         n = self.exec_activation_fn(self.conv_2(concat))
-        h_next = torch.mul((1 - update_gate), n) + torch.mul(update_gate, hidden)
-
-        return h_next
+        return torch.mul((1 - update_gate), n) + torch.mul(update_gate, hidden)
 
 
 class _ConvResidualBlock(nn.Module):
@@ -447,13 +445,13 @@ class _ConvResidualBlock(nn.Module):
 
         # possibly reshape skip connection
         if orig_x.size(-1) > x.size(-1):  # Check if widths are same)
-            if len(orig_x.size()) - 2 == 1:
+            if len(orig_x.size()) == 3:
                 iw = orig_x.size()[-1:][0]
                 pad_w = _get_same_padding(iw, 2, 2)
                 pool = torch.nn.AvgPool1d(
                     2, 2, padding=pad_w // 2, count_include_pad=False
                 )
-            elif len(orig_x.size()) - 2 == 2:
+            elif len(orig_x.size()) == 4:
                 ih, iw = orig_x.size()[-2:]
                 pad_h, pad_w = _get_same_padding(
                     ih,
@@ -463,7 +461,7 @@ class _ConvResidualBlock(nn.Module):
                 pool = torch.nn.AvgPool2d(
                     2, 2, padding=(pad_h // 2, pad_w // 2), count_include_pad=False
                 )
-            elif len(orig_x.size()) - 2 == 3:
+            elif len(orig_x.size()) == 5:
                 _id, ih, iw = orig_x.size()[-3:]
                 pad_d, pad_h, pad_w = (
                     _get_same_padding(_id, 2, 2),
@@ -488,7 +486,4 @@ class _ConvResidualBlock(nn.Module):
                 (len(orig_x.size()) - 2) * (0, 0)
                 + (self.out_channels - self.in_channels, 0),
             )
-        elif self.out_channels < in_channels:
-            pass
-
         return orig_x + x

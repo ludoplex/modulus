@@ -77,7 +77,7 @@ def bilinear_upsample_batched_2d(
 @wp.kernel
 def threshold_3d(
     array: wp.array3d(dtype=float), threshold: float, min_value: float, max_value: float
-):  # pragma: no cover
+):    # pragma: no cover
     """Threshold 3d array by value. Values bellow threshold will be `min_value` and those above will be `max_value`.
 
     Parameters
@@ -92,10 +92,7 @@ def threshold_3d(
         Value to set if above threshold
     """
     i, j, k = wp.tid()
-    if array[i, j, k] < threshold:
-        array[i, j, k] = min_value
-    else:
-        array[i, j, k] = max_value
+    array[i, j, k] = min_value if array[i, j, k] < threshold else max_value
 
 
 @wp.kernel

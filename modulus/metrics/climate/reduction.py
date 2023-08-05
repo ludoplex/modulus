@@ -96,10 +96,7 @@ def zonal_var(
     weights = _compute_lat_weights(lat)
     ws = WeightedVariance(weights)
     var = ws(x, dim=dim, keepdims=keepdims)
-    if std:
-        return torch.sqrt(var)
-    else:
-        return var
+    return torch.sqrt(var) if std else var
 
 
 def global_mean(x: Tensor, lat: Tensor, keepdims: bool = False) -> Tensor:
@@ -175,7 +172,4 @@ def global_var(
     # Take var over longitude
     long_reduce = torch.mean(lat_reduced, dim=-1, keepdims=keepdims)
 
-    if std:
-        return torch.sqrt(long_reduce)
-    else:
-        return long_reduce
+    return torch.sqrt(long_reduce) if std else long_reduce

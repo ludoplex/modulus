@@ -67,6 +67,4 @@ class WeightNormLinear(nn.Module):
 
     def extra_repr(self) -> str:
         """Print information about weight norm"""
-        return "in_features={}, out_features={}, bias={}".format(
-            self.in_features, self.out_features, self.bias is not None
-        )
+        return f"in_features={self.in_features}, out_features={self.out_features}, bias={self.bias is not None}"

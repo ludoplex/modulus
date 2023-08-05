@@ -33,12 +33,9 @@ class ModelRegistry:
 
     @staticmethod
     def _construct_registry() -> dict:
-        registry = {}
         group = "modulus.models"
         entrypoints = pkg_resources.iter_entry_points(group)
-        for entry_point in entrypoints:
-            registry[entry_point.name] = entry_point
-        return registry
+        return {entry_point.name: entry_point for entry_point in entrypoints}
 
     def register(self, model: "modulus.Module", name: Union[str, None] = None) -> None:
         """
@@ -97,13 +94,12 @@ class ModelRegistry:
             If no model is registered under the provided name.
         """
 
-        if name in self._model_registry:
-            model = self._model_registry[name]
-            if isinstance(model, pkg_resources.EntryPoint):
-                model = model.load()
-            return model
-        else:
+        if name not in self._model_registry:
             raise KeyError(f"No model is registered under the name {name}")
+        model = self._model_registry[name]
+        if isinstance(model, pkg_resources.EntryPoint):
+            model = model.load()
+        return model
 
     def list_models(self) -> List[str]:
         """

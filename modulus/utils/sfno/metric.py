@@ -237,7 +237,7 @@ class MetricsHandler:
             )
         return
 
-    def finalize(self, final_inference=False):  # pragma: no cover
+    def finalize(self, final_inference=False):    # pragma: no cover
         """
         Finalizes the validation metrics after a validation run. It gathers the metrics
         across different processes, computes the final metrics, and prepares the logs.
@@ -313,7 +313,7 @@ class MetricsHandler:
                 self.acc_curve = torch.cat(acc_curve_list, dim=0)
 
             # divide by number of steps
-            self.valid_buffer[0:2] = self.valid_buffer[0:2] / self.valid_buffer[2]
+            self.valid_buffer[:2] = self.valid_buffer[:2] / self.valid_buffer[2]
             self.valid_weighted_rmse = (
                 self.mult * self.valid_weighted_rmse / self.valid_buffer[2]
             )
@@ -353,23 +353,20 @@ class MetricsHandler:
 
             valid_weighted_rmse_arr = self.valid_weighted_rmse_cpu.numpy()
             for var_name, var_idx in self.rmse_vars.items():
-                logs["metrics"]["validation " + var_name] = valid_weighted_rmse_arr[
-                    var_idx
-                ]
+                logs["metrics"][
+                    f"validation {var_name}"
+                ] = valid_weighted_rmse_arr[var_idx]
 
             acc_curve_arr = self.acc_curve_cpu.numpy()
             for var_name, var_idx in self.acc_vars.items():
-                logs["metrics"]["ACC time " + var_name] = acc_curve_arr[
+                logs["metrics"][f"ACC time {var_name}"] = acc_curve_arr[
                     var_idx, self.valid_autoreg_steps
                 ]
 
             acc_auc_arr = self.acc_auc_cpu.numpy()
             for var_name, var_idx in self.acc_auc_vars.items():
-                logs["metrics"]["ACC AUC " + var_name] = acc_auc_arr[var_idx]
+                logs["metrics"][f"ACC AUC {var_name}"] = acc_auc_arr[var_idx]
 
         self.logs = logs
 
-        if final_inference:
-            return logs, self.acc_curve
-        else:
-            return logs
+        return (logs, self.acc_curve) if final_inference else logs

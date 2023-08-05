@@ -89,8 +89,7 @@ class _GraphCastWrapper(torch.nn.Module):
 
     def forward(self, x):
         x = x.to(self.dtype)
-        y = self.model(x)
-        return y
+        return self.model(x)
 
 
 def graphcast_34ch(
@@ -291,9 +290,6 @@ def _fix_state_dict_keys(state_dict, add_module=False):
     """
     fixed_state_dict = {}
     for key, value in state_dict.items():
-        if add_module:
-            new_key = "module." + key
-        else:
-            new_key = key.replace("module.", "")
+        new_key = f"module.{key}" if add_module else key.replace("module.", "")
         fixed_state_dict[new_key] = value
     return fixed_state_dict

@@ -66,7 +66,7 @@ class Module(torch.nn.Module):
         out._args = {
             "__name__": cls.__name__,
             "__module__": cls.__module__,
-            "__args__": {k: v for k, v in bound_args.arguments.items()},
+            "__args__": dict(bound_args.arguments.items()),
         }
         return out
 
@@ -80,7 +80,7 @@ class Module(torch.nn.Module):
         self.logger = logging.getLogger("core.module")
         handler = logging.StreamHandler()
         formatter = logging.Formatter(
-            f"[%(asctime)s - %(levelname)s] %(message)s", datefmt="%H:%M:%S"
+            "[%(asctime)s - %(levelname)s] %(message)s", datefmt="%H:%M:%S"
         )
         handler.setFormatter(formatter)
         self.logger.addHandler(handler)
@@ -204,7 +204,7 @@ class Module(torch.nn.Module):
                     tar.add(str(file), arcname=file.name)
 
             if file_name is None:
-                file_name = self.meta.name + ".mdlus"
+                file_name = f"{self.meta.name}.mdlus"
 
             # Save files to remote destination
             fs = _get_fs(file_name)
@@ -213,13 +213,13 @@ class Module(torch.nn.Module):
     @staticmethod
     def _check_checkpoint(local_path: str) -> bool:
         if not local_path.joinpath("args.json").exists():
-            raise IOError(f"File 'args.json' not found in checkpoint")
+            raise IOError("File 'args.json' not found in checkpoint")
 
         if not local_path.joinpath("metadata.json").exists():
-            raise IOError(f"File 'metadata.json' not found in checkpoint")
+            raise IOError("File 'metadata.json' not found in checkpoint")
 
         if not local_path.joinpath("model.pt").exists():
-            raise IOError(f"Model weights 'model.pt' not found in checkpoint")
+            raise IOError("Model weights 'model.pt' not found in checkpoint")
 
         # Check if the checkpoint version is compatible with the current version
         with open(local_path.joinpath("metadata.json"), "r") as f:
@@ -390,7 +390,4 @@ class Module(torch.nn.Module):
 
     def num_parameters(self) -> int:
         """Gets the number of learnable parameters"""
-        count = 0
-        for name, param in self.named_parameters():
-            count += param.numel()
-        return count
+        return sum(param.numel() for name, param in self.named_parameters())

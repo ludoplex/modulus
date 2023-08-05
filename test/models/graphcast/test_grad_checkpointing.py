@@ -58,7 +58,7 @@ def test_grad_checkpointing(device, num_channels=2, res_h=15, res_w=15):
 
     # Forward pass with checkpointing
     y_pred_checkpointed = x
-    for i in range(num_steps):
+    for _ in range(num_steps):
         y_pred_checkpointed = model(y_pred_checkpointed)
 
     # dummy loss
@@ -66,10 +66,9 @@ def test_grad_checkpointing(device, num_channels=2, res_h=15, res_w=15):
 
     # compute gradients
     loss.backward()
-    computed_grads_checkpointed = {}
-    for name, param in model.named_parameters():
-        computed_grads_checkpointed[name] = param.grad.clone()
-
+    computed_grads_checkpointed = {
+        name: param.grad.clone() for name, param in model.named_parameters()
+    }
     # Fix random seeds
     fix_random_seeds()
 
@@ -89,7 +88,7 @@ def test_grad_checkpointing(device, num_channels=2, res_h=15, res_w=15):
 
     # Forward pass without checkpointing
     y_pred = x
-    for i in range(num_steps):
+    for _ in range(num_steps):
         y_pred = model(y_pred)
 
     # dummy loss
@@ -97,15 +96,15 @@ def test_grad_checkpointing(device, num_channels=2, res_h=15, res_w=15):
 
     # compute gradients
     loss.backward()
-    computed_grads = {}
-    for name, param in model.named_parameters():
-        computed_grads[name] = param.grad.clone()
-
+    computed_grads = {
+        name: param.grad.clone() for name, param in model.named_parameters()
+    }
     # Compare the gradients
-    for name in computed_grads:
-        torch.allclose(
-            computed_grads_checkpointed[name], computed_grads[name]
-        ), "Gradient do not match. Checkpointing failed!"
+    for name, value in computed_grads.items():
+        (
+            torch.allclose(computed_grads_checkpointed[name], value),
+            "Gradient do not match. Checkpointing failed!",
+        )
 
     # Check that the results are the same
     assert torch.allclose(

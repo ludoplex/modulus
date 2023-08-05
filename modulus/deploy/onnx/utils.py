@@ -77,7 +77,7 @@ def export_to_onnx_stream(
     if isinstance(invars, Tensor):
         invars = (invars.detach().cpu(),)
     else:
-        invars = tuple([invar.detach().cpu() for invar in invars])
+        invars = tuple(invar.detach().cpu() for invar in invars)
     # Use model's device if provided (Modulus modules have this)
     if hasattr(model, "device"):
         model_device = model.device
@@ -124,9 +124,7 @@ def get_ort_session(
     if "cuda" in str(device):
         providers = ["CUDAExecutionProvider"] + providers
 
-    # Must run on GPU as Rfft is currently implemented only for GPU.
-    ort_sess = ort.InferenceSession(model, providers=providers)
-    return ort_sess
+    return ort.InferenceSession(model, providers=providers)
 
 
 @check_ort_install
@@ -159,6 +157,4 @@ def run_onnx_inference(
                   for inp, v in zip(ort_sess.get_inputs(), invars)}
     # fmt: on
     ort_outputs = ort_sess.run(None, ort_inputs)
-    # Convert to tensors
-    outputs = tuple([torch.Tensor(v) for v in ort_outputs])
-    return outputs
+    return tuple(torch.Tensor(v) for v in ort_outputs)

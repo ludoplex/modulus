@@ -55,5 +55,5 @@ def test_loss():
         f"{grad_diff.max()} / {grad_diff.mean()}"
     )
 
-    assert torch.allclose(loss1, loss2, atol=atol), loss_diff_msg + " for loss"
-    assert torch.allclose(grad1, grad2, atol=atol), grad_diff_msg + " for gradient"
+    assert torch.allclose(loss1, loss2, atol=atol), f"{loss_diff_msg} for loss"
+    assert torch.allclose(grad1, grad2, atol=atol), f"{grad_diff_msg} for gradient"

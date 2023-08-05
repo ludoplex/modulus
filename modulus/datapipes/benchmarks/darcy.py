@@ -212,12 +212,11 @@ class Darcy2D(Datapipe):
                 multigrid_dim = self.dim
 
             # run till max steps is reached
-            for k in range(
+            for _ in range(
                 self.max_iterations // self.iterations_per_convergence_check
             ):
-
                 # run jacobi iterations
-                for s in range(self.iterations_per_convergence_check):
+                for _ in range(self.iterations_per_convergence_check):
                     # iterate solver
                     wp.launch(
                         kernel=darcy_mgrid_jacobi_iterative_batched_2d,

@@ -504,12 +504,9 @@ class GraphCastNet(Module):
             m2g_efeat_embedded, grid_nfeat_encoded, mesh_nfeat_processed, self.m2g_graph
         )
 
-        # map to the target output dimension
-        grid_nfeat_finale = self.finale(
+        return self.finale(
             grid_nfeat_decoded,
         )
-
-        return grid_nfeat_finale
 
     def custom_forward(self, grid_nfeat: Tensor) -> Tensor:
         """GraphCast forward method with support for gradient checkpointing.
@@ -542,7 +539,7 @@ class GraphCastNet(Module):
             self.mesh_graph,
         )
 
-        grid_nfeat_finale = self.decoder_checkpoint_fn(
+        return self.decoder_checkpoint_fn(
             self.decoder_forward,
             mesh_efeat_processed,
             mesh_nfeat_processed,
@@ -550,8 +547,6 @@ class GraphCastNet(Module):
             use_reentrant=False,
             preserve_rng_state=False,
         )
-
-        return grid_nfeat_finale
 
     def forward(
         self,

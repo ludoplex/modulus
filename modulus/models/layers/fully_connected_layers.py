@@ -50,11 +50,7 @@ class FCLayer(nn.Module):
     ) -> None:
         super().__init__()
 
-        if activation_fn is None:
-            self.activation_fn = Identity()
-        else:
-            self.activation_fn = activation_fn
-
+        self.activation_fn = Identity() if activation_fn is None else activation_fn
         self.weight_norm = weight_norm
         self.activation_par = activation_par
 
@@ -99,10 +95,7 @@ class ConvFCLayer(nn.Module):
         activation_par: Union[nn.Parameter, None] = None,
     ) -> None:
         super().__init__()
-        if activation_fn is None:
-            self.activation_fn = Identity()
-        else:
-            self.activation_fn = activation_fn
+        self.activation_fn = Identity() if activation_fn is None else activation_fn
         self.activation_par = activation_par
 
     def apply_activation(self, x: Tensor) -> Tensor:

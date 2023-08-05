@@ -51,14 +51,11 @@ class DistributedInstanceNorm2d(nn.Module):  # pragma: no cover
     def _gather_hw(self, x: torch.Tensor) -> torch.Tensor:  # pragma: no cover
         # gather the data over the spatial communicator
         xh = gather_from_parallel_region(x, -2, "h")
-        xw = gather_from_parallel_region(xh, -1, "w")
-        return xw
+        return gather_from_parallel_region(xh, -1, "w")
 
     @torch.jit.ignore
     def _gather_spatial(self, x: torch.Tensor) -> torch.Tensor:  # pragma: no cover
-        # gather the data over the spatial communicator
-        xs = gather_from_parallel_region(x, -1, "spatial")
-        return xs
+        return gather_from_parallel_region(x, -1, "spatial")
 
     def _stats_naive(
         self, x: torch.Tensor

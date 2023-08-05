@@ -111,7 +111,7 @@ def validate_forward_accuracy(
     # File name / path
     # Output files should live in test/models/data
     if file_name is None:
-        file_name = model.meta.name + "_output.pth"
+        file_name = f"{model.meta.name}_output.pth"
     file_name = (
         Path(__file__).parents[1].resolve() / Path("data") / Path(file_name.lower())
     )
@@ -122,11 +122,8 @@ def validate_forward_accuracy(
         raise IOError(
             f"Output check file {str(file_name)} wasn't found so one was created. Please re-run the test."
         )
-    # Load tensor dictionary and check
     else:
         tensor_dict = torch.load(str(file_name))
-        output_target = tuple(
-            [value.to(model.device) for value in tensor_dict.values()]
-        )
+        output_target = tuple(value.to(model.device) for value in tensor_dict.values())
 
         return compare_output(output, output_target, rtol, atol)

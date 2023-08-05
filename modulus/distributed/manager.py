@@ -57,9 +57,7 @@ class DistributedManager(object):
         if not hasattr(obj, "_distributed"):
             obj._distributed = False
         if not hasattr(obj, "_device"):
-            obj._device = torch.device(
-                f"cuda:0" if torch.cuda.is_available() else "cpu"
-            )
+            obj._device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         if not hasattr(obj, "_cuda"):
             obj._cuda = torch.cuda.is_available()
         if not hasattr(obj, "_broadcast_buffers"):
@@ -114,10 +112,7 @@ class DistributedManager(object):
         If name is None, group is also None indicating the default process group
         If named group does not exist, returns None also
         """
-        if name in self._groups.keys():
-            return self._groups[name]
-        else:
-            return None
+        return self._groups[name] if name in self._groups.keys() else None
 
     def group_size(self, name=None):
         """
@@ -135,18 +130,13 @@ class DistributedManager(object):
         if name is None:
             return self._rank
         group = self.group(name)
-        if group is None:
-            return 0
-        else:
-            return dist.get_rank(group=group)
+        return 0 if group is None else dist.get_rank(group=group)
 
     def group_name(self, group=None):
         """
         Returns the name of process group
         """
-        if group is None:
-            return None
-        return self._group_names[group]
+        return None if group is None else self._group_names[group]
 
     @property
     def broadcast_buffers(self):
@@ -173,11 +163,7 @@ class DistributedManager(object):
         self._find_unused_parameters = find_params
 
     def __str__(self):
-        output = (
-            f"Initialized process {self.rank} of {self.world_size} using "
-            f"method '{self._initialization_method}'. Device set to {str(self.device)}"
-        )
-        return output
+        return f"Initialized process {self.rank} of {self.world_size} using method '{self._initialization_method}'. Device set to {str(self.device)}"
 
     @classmethod
     def is_initialized(cls) -> bool:

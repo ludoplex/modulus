@@ -77,7 +77,7 @@ class FNO1DEncoder(nn.Module):
             num_fno_modes = [num_fno_modes]
         # Add relative coordinate feature
         if self.coord_features:
-            self.in_channels = self.in_channels + 1
+            self.in_channels += 1
         self.activation_fn = activation_fn
 
         self.spconv_layers = nn.ModuleList()
@@ -86,11 +86,11 @@ class FNO1DEncoder(nn.Module):
         # Initial lift network
         self.lift_network = torch.nn.Sequential()
         self.lift_network.append(
-            layers.Conv1dFCLayer(self.in_channels, int(self.fno_width / 2))
+            layers.Conv1dFCLayer(self.in_channels, self.fno_width // 2)
         )
         self.lift_network.append(self.activation_fn)
         self.lift_network.append(
-            layers.Conv1dFCLayer(int(self.fno_width / 2), self.fno_width)
+            layers.Conv1dFCLayer(self.fno_width // 2, self.fno_width)
         )
 
         # Build Neural Fourier Operators
@@ -198,7 +198,7 @@ class FNO2DEncoder(nn.Module):
             num_fno_modes = [num_fno_modes, num_fno_modes]
         # Add relative coordinate feature
         if self.coord_features:
-            self.in_channels = self.in_channels + 2
+            self.in_channels += 2
         self.activation_fn = activation_fn
 
         self.spconv_layers = nn.ModuleList()
@@ -207,11 +207,11 @@ class FNO2DEncoder(nn.Module):
         # Initial lift network
         self.lift_network = torch.nn.Sequential()
         self.lift_network.append(
-            layers.Conv2dFCLayer(self.in_channels, int(self.fno_width / 2))
+            layers.Conv2dFCLayer(self.in_channels, self.fno_width // 2)
         )
         self.lift_network.append(self.activation_fn)
         self.lift_network.append(
-            layers.Conv2dFCLayer(int(self.fno_width / 2), self.fno_width)
+            layers.Conv2dFCLayer(self.fno_width // 2, self.fno_width)
         )
 
         # Build Neural Fourier Operators
@@ -332,7 +332,7 @@ class FNO3DEncoder(nn.Module):
             num_fno_modes = [num_fno_modes, num_fno_modes, num_fno_modes]
         # Add relative coordinate feature
         if self.coord_features:
-            self.in_channels = self.in_channels + 3
+            self.in_channels += 3
         self.activation_fn = activation_fn
 
         self.spconv_layers = nn.ModuleList()
@@ -341,11 +341,11 @@ class FNO3DEncoder(nn.Module):
         # Initial lift network
         self.lift_network = torch.nn.Sequential()
         self.lift_network.append(
-            layers.Conv3dFCLayer(self.in_channels, int(self.fno_width / 2))
+            layers.Conv3dFCLayer(self.in_channels, self.fno_width // 2)
         )
         self.lift_network.append(self.activation_fn)
         self.lift_network.append(
-            layers.Conv3dFCLayer(int(self.fno_width / 2), self.fno_width)
+            layers.Conv3dFCLayer(self.fno_width // 2, self.fno_width)
         )
 
         # Build Neural Fourier Operators
@@ -470,7 +470,7 @@ class FNO4DEncoder(nn.Module):
             num_fno_modes = [num_fno_modes, num_fno_modes, num_fno_modes, num_fno_modes]
         # Add relative coordinate feature
         if self.coord_features:
-            self.in_channels = self.in_channels + 4
+            self.in_channels += 4
         self.activation_fn = activation_fn
 
         self.spconv_layers = nn.ModuleList()
@@ -479,11 +479,11 @@ class FNO4DEncoder(nn.Module):
         # Initial lift network
         self.lift_network = torch.nn.Sequential()
         self.lift_network.append(
-            layers.ConvNdFCLayer(self.in_channels, int(self.fno_width / 2))
+            layers.ConvNdFCLayer(self.in_channels, self.fno_width // 2)
         )
         self.lift_network.append(self.activation_fn)
         self.lift_network.append(
-            layers.ConvNdFCLayer(int(self.fno_width / 2), self.fno_width)
+            layers.ConvNdFCLayer(self.fno_width // 2, self.fno_width)
         )
 
         # Build Neural Fourier Operators

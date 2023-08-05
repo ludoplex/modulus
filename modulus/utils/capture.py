@@ -77,9 +77,10 @@ class _StaticCapture(object):
         self.no_grad = False
 
         # Set up toggles for optimizations
-        assert (
-            amp_type == torch.float16 or amp_type == torch.bfloat16
-        ), "AMP type must be torch.float16 or torch.bfloat16"
+        assert amp_type in [
+            torch.float16,
+            torch.bfloat16,
+        ], "AMP type must be torch.float16 or torch.bfloat16"
         # CUDA device
         if "cuda" in str(self.model.device):
             # CUDA graphs
@@ -104,7 +105,7 @@ class _StaticCapture(object):
             # Check if bfloat16 is suppored on the GPU
             if amp_type == torch.bfloat16 and not torch.cuda.is_bf16_supported():
                 self.logger.warning(
-                    f"Current CUDA device does not support bfloat16, falling back to float16"
+                    "Current CUDA device does not support bfloat16, falling back to float16"
                 )
                 amp_type = torch.float16
             self.amp_dtype = amp_type
@@ -113,7 +114,6 @@ class _StaticCapture(object):
             self.scaler = self._init_amp_scaler(scaler_enabled, self.logger)
 
             self.replay_stream = torch.cuda.current_stream(self.model.device)
-        # CPU device
         else:
             self.cuda_graphs_enabled = False
             # AMP CPU
@@ -129,7 +129,7 @@ class _StaticCapture(object):
             # https://pytorch.org/docs/stable/amp.html#cpu-op-specific-behavior
             if amp_type == torch.float16 and use_autocast:
                 self.logger.warning(
-                    f"torch.float16 not supported for CPU AMP, switching to torch.bfloat16"
+                    "torch.float16 not supported for CPU AMP, switching to torch.bfloat16"
                 )
                 amp_type = torch.bfloat16
             self.amp_dtype = torch.bfloat16
@@ -275,11 +275,7 @@ class _StaticCapture(object):
         Dict[str, Any]
             Dictionary of states to save for file
         """
-        scaler_states = {}
-        for key, value in cls._amp_scalers.items():
-            scaler_states[key] = value.state_dict()
-
-        return scaler_states
+        return {key: value.state_dict() for key, value in cls._amp_scalers.items()}
 
     @classmethod
     def load_state_dict(cls, state_dict: Dict[str, Any]) -> None:

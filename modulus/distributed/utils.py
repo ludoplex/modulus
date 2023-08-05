@@ -116,7 +116,8 @@ def gather_loss(loss: float, dst_rank: int = 0, mean: bool = True):
     gather_list = None
     if distmng.rank == dst_rank:
         gather_list = [
-            torch.zeros(1).to(distmng.device) for i in range(distmng.world_size)
+            torch.zeros(1).to(distmng.device)
+            for _ in range(distmng.world_size)
         ]
     dist.gather(loss.to(distmng.device), gather_list, dst_rank)
 

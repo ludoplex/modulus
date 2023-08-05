@@ -56,7 +56,7 @@ class Metadata:
 
 def get_data_loader(
     params: Params, files_pattern: str, train: bool
-):  # pragma: no cover
+):    # pragma: no cover
     """Matches interface used in trainer.py:Trainer"""
     ds = xarray.open_zarr(files_pattern)
     dataset = _xarray_to_dataset(params, ds, train=train)
@@ -141,10 +141,7 @@ def get_data_loader(
         img_local_offset_y=0,
     )
 
-    if train:
-        return dataloader, metadata, sampler
-    else:
-        return dataloader, metadata
+    return (dataloader, metadata, sampler) if train else (dataloader, metadata)
 
 
 def _xarray_to_dataset(
@@ -153,11 +150,9 @@ def _xarray_to_dataset(
     year = ds.time.dt.year
     if train:
         mask = (year <= 2015) & (year >= 1980)
-        ds = ds.sel(time=mask)
     else:
-        mask = (2015 < year) & (year <= 2017)
-        ds = ds.sel(time=mask)
-
+        mask = (year > 2015) & (year <= 2017)
+    ds = ds.sel(time=mask)
     return XarrayDataset(ds.fields, params.in_channels, params.out_channels)
 
 
@@ -195,7 +190,4 @@ class XarrayDataset(Dataset):
 
     def __len__(self):  # pragma: no cover
         times = self.data.time
-        if len(times) > 1:
-            return len(times) - 1
-        else:
-            return 0
+        return len(times) - 1 if len(times) > 1 else 0

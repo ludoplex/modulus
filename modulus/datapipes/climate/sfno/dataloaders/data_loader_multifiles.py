@@ -44,11 +44,11 @@ class MultifilesDataset(Dataset):
         self._get_files_stats()
 
     def _get_files_stats(self):  # pragma: no cover
-        self.files_paths = glob.glob(self.location + "/*.h5")
+        self.files_paths = glob.glob(f"{self.location}/*.h5")
         self.files_paths.sort()
         self.n_years = len(self.files_paths)
         with h5py.File(self.files_paths[0], "r") as _f:
-            logging.info("Getting file stats from {}".format(self.files_paths[0]))
+            logging.info(f"Getting file stats from {self.files_paths[0]}")
             self.n_samples_per_year = _f["fields"].shape[0]
             # original image shape (before padding)
             self.img_shape_x = _f["fields"].shape[2]
@@ -64,21 +64,13 @@ class MultifilesDataset(Dataset):
 
         self.n_samples_total = self.n_years * self.n_samples_per_year
         self.files = [None for _ in range(self.n_years)]
-        logging.info("Number of samples per year: {}".format(self.n_samples_per_year))
+        logging.info(f"Number of samples per year: {self.n_samples_per_year}")
         logging.info(
-            "Found data at path {}. Number of examples: {}. Image Shape: {} x {} x {}".format(
-                self.location,
-                self.n_samples_total,
-                self.img_shape_x,
-                self.img_shape_y,
-                self.n_in_channels,
-            )
+            f"Found data at path {self.location}. Number of examples: {self.n_samples_total}. Image Shape: {self.img_shape_x} x {self.img_shape_y} x {self.n_in_channels}"
         )
-        logging.info("Delta t: {} hours".format(6 * self.dt))
+        logging.info(f"Delta t: {6 * self.dt} hours")
         logging.info(
-            "Including {} hours of past history in training at a frequency of {} hours".format(
-                6 * self.dt * self.n_history, 6 * self.dt
-            )
+            f"Including {6 * self.dt * self.n_history} hours of past history in training at a frequency of {6 * self.dt} hours"
         )
 
     def _open_file(self, year_idx):  # pragma: no cover
@@ -105,11 +97,7 @@ class MultifilesDataset(Dataset):
         # if we are on the last image in a year predict identity, else predict next timestep
         step = 0 if local_idx >= self.n_samples_per_year - self.dt else self.dt
 
-        if self.train and self.roll:
-            y_roll = random.randint(0, self.img_shape_y)
-        else:
-            y_roll = 0
-
+        y_roll = random.randint(0, self.img_shape_y) if self.train and self.roll else 0
         if self.train and (self.crop_size_x or self.crop_size_y):
             rnd_x = random.randint(0, self.img_shape_x - self.crop_size_x)
             rnd_y = random.randint(0, self.img_shape_y - self.crop_size_y)

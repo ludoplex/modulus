@@ -120,7 +120,7 @@ class SRResNet(Module):
         activation_fn = get_activation(activation_fn)
 
         # Scaling factor must be 2, 4, or 8
-        scaling_factor = int(scaling_factor)
+        scaling_factor = scaling_factor
         assert scaling_factor in {2, 4, 8}, "The scaling factor must be 2, 4, or 8!"
 
         # The first convolutional block
@@ -142,7 +142,7 @@ class SRResNet(Module):
                     conv_layer_size=conv_layer_size,
                     activation_fn=activation_fn,
                 )
-                for i in range(n_resid_blocks)
+                for _ in range(n_resid_blocks)
             ]
         )
 
@@ -164,7 +164,7 @@ class SRResNet(Module):
                     conv_layer_size=conv_layer_size,
                     scaling_factor=2,
                 )
-                for i in range(n_subpixel_convolution_blocks)
+                for _ in range(n_subpixel_convolution_blocks)
             ]
         )
 
@@ -221,10 +221,7 @@ class ConvolutionalBlock3d(nn.Module):
         super().__init__()
 
         # A container that will hold the layers in this convolutional block
-        layers = list()
-
-        # A convolutional layer
-        layers.append(
+        layers = [
             nn.Conv3d(
                 in_channels=in_channels,
                 out_channels=out_channels,
@@ -232,10 +229,10 @@ class ConvolutionalBlock3d(nn.Module):
                 stride=stride,
                 padding=kernel_size // 2,
             )
-        )
+        ]
 
         # A batch normalization (BN) layer, if wanted
-        if batch_norm is True:
+        if batch_norm:
             layers.append(nn.BatchNorm3d(num_features=out_channels))
 
         self.activation_fn = activation_fn
@@ -244,8 +241,7 @@ class ConvolutionalBlock3d(nn.Module):
         self.conv_block = nn.Sequential(*layers)
 
     def forward(self, input: Tensor) -> Tensor:
-        output = self.activation_fn(self.conv_block(input))
-        return output  # (N, out_channels, w, h)
+        return self.activation_fn(self.conv_block(input))
 
 
 class PixelShuffle3d(nn.Module):
@@ -356,17 +352,16 @@ class ResidualConvBlock3d(nn.Module):
     ):
         super().__init__()
 
-        layers = []
-        for i in range(n_layers - 1):
-            layers.append(
-                ConvolutionalBlock3d(
-                    in_channels=conv_layer_size,
-                    out_channels=conv_layer_size,
-                    kernel_size=kernel_size,
-                    batch_norm=True,
-                    activation_fn=activation_fn,
-                )
+        layers = [
+            ConvolutionalBlock3d(
+                in_channels=conv_layer_size,
+                out_channels=conv_layer_size,
+                kernel_size=kernel_size,
+                batch_norm=True,
+                activation_fn=activation_fn,
             )
+            for _ in range(n_layers - 1)
+        ]
         # The final convolutional block with no activation
         layers.append(
             ConvolutionalBlock3d(

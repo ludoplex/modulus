@@ -25,10 +25,9 @@ from modulus.utils.sfno.distributed import comm
 from modulus.utils.sfno.distributed.mappings import reduce_from_parallel_region
 
 
-def mean(x, axis=None):  # pragma: no cover
+def mean(x, axis=None):    # pragma: no cover
     """Calculates the spatial mean."""
-    y = np.sum(x, axis) / np.size(x, axis)
-    return y
+    return np.sum(x, axis) / np.size(x, axis)
 
 
 def lat_np(j, num_lat):  # pragma: no cover
@@ -36,7 +35,7 @@ def lat_np(j, num_lat):  # pragma: no cover
     return 90 - j * 180 / (num_lat - 1)
 
 
-def weighted_acc(pred, target, weighted=True):  # pragma: no cover
+def weighted_acc(pred, target, weighted=True):    # pragma: no cover
     """takes in arrays of size [1, h, w]  and returns latitude-weighted correlation"""
     if len(pred.shape) == 2:
         pred = np.expand_dims(pred, 0)
@@ -53,10 +52,9 @@ def weighted_acc(pred, target, weighted=True):  # pragma: no cover
         if weighted
         else 1
     )
-    r = (weight * pred * target).sum() / np.sqrt(
+    return (weight * pred * target).sum() / np.sqrt(
         (weight * pred * pred).sum() * (weight * target * target).sum()
     )
-    return r
 
 
 def weighted_rmse(pred, target):  # pragma: no cover
@@ -120,10 +118,9 @@ def latitude_weighting_factor_torch(
 @torch.jit.script
 def weighted_rmse_torch_kernel(
     pred: torch.Tensor, target: torch.Tensor, weight: torch.Tensor
-) -> torch.Tensor:  # pragma: no cover
+) -> torch.Tensor:    # pragma: no cover
     """Calculates the weighted rmse between prediction and target."""
-    result = torch.mean(weight * torch.square(pred - target), dim=(-1, -2))
-    return result
+    return torch.mean(weight * torch.square(pred - target), dim=(-1, -2))
 
 
 @torch.jit.script
@@ -190,14 +187,12 @@ def weighted_acc_torch_local(
 
 def weighted_acc_torch_local_no_reduction(
     pred: torch.Tensor, target: torch.Tensor, weight: torch.Tensor
-) -> torch.Tensor:  # pragma: no cover
+) -> torch.Tensor:    # pragma: no cover
     """Calculates the weighted acc between prediction and target in a local
     setting without averaging."""
     eps = 1e-6
     cov, var1, var2 = weighted_acc_torch_kernel(pred, target, weight)
-    res = cov / (torch.sqrt(var1 * var2) + eps)
-
-    return res
+    return cov / (torch.sqrt(var1 * var2) + eps)
 
 
 def weighted_acc_torch_distributed(

@@ -37,13 +37,10 @@ dtype = np.float32
 T = TypeVar("T", np.ndarray, float)
 
 
-def _ensure_units_of_degrees(da):  # pragma: no cover
+def _ensure_units_of_degrees(da):    # pragma: no cover
     """Ensure that the units of the DataArray are in degrees."""
     units = da.attrs.get("units", "").lower()
-    if "rad" in units:
-        return np.rad2deg(da).assign_attrs(units="degrees")
-    else:
-        return da
+    return np.rad2deg(da).assign_attrs(units="degrees") if "rad" in units else da
 
 
 def cos_zenith_angle(
@@ -101,7 +98,7 @@ def _total_days(time_diff):  # pragma: no cover
     return np.asarray(time_diff).astype("timedelta64[us]") / np.timedelta64(1, "D")
 
 
-def _greenwich_mean_sidereal_time(model_time):  # pragma: no cover
+def _greenwich_mean_sidereal_time(model_time):    # pragma: no cover
     """
     Greenwich mean sidereal time, in radians.
     Reference:
@@ -122,9 +119,7 @@ def _greenwich_mean_sidereal_time(model_time):  # pragma: no cover
         + jul_centuries * (0.093104 - jul_centuries * 6.2 * 10e-6)
     )
 
-    theta_radians = np.deg2rad(theta / 240.0) % (2 * np.pi)
-
-    return theta_radians
+    return np.deg2rad(theta / 240.0) % (2 * np.pi)
 
 
 def _local_mean_sidereal_time(model_time, longitude):  # pragma: no cover
@@ -252,7 +247,7 @@ def _local_hour_angle(model_time, longitude, right_ascension):  # pragma: no cov
     return _local_mean_sidereal_time(model_time, longitude) - right_ascension
 
 
-def _star_cos_zenith(model_time, lon, lat):  # pragma: no cover
+def _star_cos_zenith(model_time, lon, lat):    # pragma: no cover
     """
     Return cosine of star zenith angle
     lon,lat in radians
@@ -266,8 +261,6 @@ def _star_cos_zenith(model_time, lon, lat):  # pragma: no cover
     ra, dec = _right_ascension_declination(model_time)
     h_angle = _local_hour_angle(model_time, lon, ra)
 
-    cosine_zenith = np.sin(lat) * np.sin(dec) + np.cos(lat) * np.cos(dec) * np.cos(
+    return np.sin(lat) * np.sin(dec) + np.cos(lat) * np.cos(dec) * np.cos(
         h_angle
     )
-
-    return cosine_zenith

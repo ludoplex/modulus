@@ -46,7 +46,7 @@ def check_batch_size(
     for t in tensors:
         t_batch_size = t.shape[0]
         if t_batch_size != batch_size:
-            logger.warning(f"Batch size incorrect for tesnor")
+            logger.warning("Batch size incorrect for tesnor")
             logger.warning(f"Expected Batch Size: {batch_size}")
             logger.warning(f"Tensor Batch Size: {t_batch_size}")
             return False
@@ -79,7 +79,7 @@ def check_seq_length(
     for t in tensors:
         t_seq_length = t.shape[axis]
         if t_seq_length != seq_length:
-            logger.warning(f"Sequence length incorrect for tesnor")
+            logger.warning("Sequence length incorrect for tesnor")
             logger.warning(f"Expected Sequence Length: {seq_length}")
             logger.warning(f"Tensor Sequence Length: {t_seq_length}")
             return False
@@ -112,7 +112,7 @@ def check_channels(
     for t in tensors:
         t_channels = t.shape[axis]
         if t_channels != channels:
-            logger.warning(f"Number of channels incorrect for tesnor")
+            logger.warning("Number of channels incorrect for tesnor")
             logger.warning(f"Expected Channels: {channels}")
             logger.warning(f"Tensor Channels: {t_channels}")
             return False
@@ -147,7 +147,7 @@ def check_grid(
     for t in tensors:
         t_grid = (t.shape[axis[0]], t.shape[axis[1]])
         if t_grid != grid:
-            logger.warning(f"Grid dimension incorrect for tesnor")
+            logger.warning("Grid dimension incorrect for tesnor")
             logger.warning(f"Expected Grid: {grid}")
             logger.warning(f"Tensor Channels: {t_grid}")
             return False

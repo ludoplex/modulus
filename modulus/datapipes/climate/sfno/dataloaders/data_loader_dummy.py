@@ -89,7 +89,7 @@ class DummyLoader(object):
             )
 
     def _get_files_stats(self):  # pragma: no cover
-        self.files_paths = glob.glob(self.location + "/*.h5")
+        self.files_paths = glob.glob(f"{self.location}/*.h5")
 
         if not self.files_paths:
             logging.info(
@@ -104,7 +104,7 @@ class DummyLoader(object):
             self.files_paths.sort()
             self.n_years = len(self.files_paths)
             with h5py.File(self.files_paths[0], "r") as _f:
-                logging.info("Getting file stats from {}".format(self.files_paths[0]))
+                logging.info(f"Getting file stats from {self.files_paths[0]}")
                 self.n_samples_per_year = _f["fields"].shape[0]
                 # original image shape (before padding)
                 self.img_shape_x = _f["fields"].shape[2]
@@ -154,20 +154,12 @@ class DummyLoader(object):
         self.n_out_channels_local = self.n_out_channels
 
         self.files = [None for _ in range(self.n_years)]
-        logging.info("Number of samples per year: {}".format(self.n_samples_per_year))
+        logging.info(f"Number of samples per year: {self.n_samples_per_year}")
         logging.info(
-            "Found data at path {}. Number of examples: {}. Image Shape: {} x {} x {}".format(
-                self.location,
-                self.n_samples_total,
-                self.img_shape_x,
-                self.img_shape_y,
-                self.n_in_channels_local,
-            )
+            f"Found data at path {self.location}. Number of examples: {self.n_samples_total}. Image Shape: {self.img_shape_x} x {self.img_shape_y} x {self.n_in_channels_local}"
         )
         logging.info(
-            "Including {} hours of past history in training at a frequency of {} hours".format(
-                6 * self.dt * self.n_history, 6 * self.dt
-            )
+            f"Including {6 * self.dt * self.n_history} hours of past history in training at a frequency of {6 * self.dt} hours"
         )
         logging.info("WARNING: using dummy data")
 
@@ -225,12 +217,12 @@ class DummyLoader(object):
         return self
 
     def __next__(self):  # pragma: no cover
-        if self.sample_idx < self.n_samples_shard:
-            self.sample_idx += 1
-
-            if self.add_zenith:
-                return self.inp, self.tar, self.zen_dummy, self.zen_dummy
-            else:
-                return self.inp, self.tar
-        else:
+        if self.sample_idx >= self.n_samples_shard:
             raise StopIteration()
+        self.sample_idx += 1
+
+        return (
+            (self.inp, self.tar, self.zen_dummy, self.zen_dummy)
+            if self.add_zenith
+            else (self.inp, self.tar)
+        )

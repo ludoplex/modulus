@@ -77,7 +77,7 @@ class StaticData:
             geop = (geop - geop.mean()) / geop.std()
         return torch.tensor(geop, dtype=torch.float32)
 
-    def get_lat_lon(self) -> Tensor:  # pragma: no cover
+    def get_lat_lon(self) -> Tensor:    # pragma: no cover
         """Computes cosine of latitudes and sine and cosine of longitudes.
 
         Returns
@@ -102,8 +102,7 @@ class StaticData:
         cos_lon = cos_lon.view(1, 1, 1, self.lon.size(0))
         cos_lon_mg = cos_lon.expand(1, 1, self.lat.size(0), self.lon.size(0))
 
-        outvar = torch.cat((cos_lat_mg, sin_lon_mg, cos_lon_mg), dim=1)
-        return outvar
+        return torch.cat((cos_lat_mg, sin_lon_mg, cos_lon_mg), dim=1)
 
     def get(self) -> Tensor:  # pragma: no cover
         """Get all static data.

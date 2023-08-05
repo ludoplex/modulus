@@ -149,13 +149,12 @@ class SpectralConvS2(nn.Module):
 
             self.weight = nn.Parameter(init)
 
+            self.weight.sharded_dims_mp = [None for _ in weight_shape]
             if self.operator_type == "dhconv":
                 self.weight.is_shared_mp = ["matmul", "w"]
-                self.weight.sharded_dims_mp = [None for _ in weight_shape]
                 self.weight.sharded_dims_mp[-1] = "h"
             else:
                 self.weight.is_shared_mp = ["matmul"]
-                self.weight.sharded_dims_mp = [None for _ in weight_shape]
                 self.weight.sharded_dims_mp[-1] = "w"
                 self.weight.sharded_dims_mp[-2] = "h"
 
@@ -259,8 +258,10 @@ class SpectralAttentionS2(nn.Module):
 
             # weights
             w = [self.scale * torch.randn(self.embed_dim, hidden_size, 2)]
-            for l in range(1, self.spectral_layers):
-                w.append(self.scale * torch.randn(hidden_size, hidden_size, 2))
+            w.extend(
+                self.scale * torch.randn(hidden_size, hidden_size, 2)
+                for _ in range(1, self.spectral_layers)
+            )
             self.w = nn.ParameterList(w)
 
             self.wout = nn.Parameter(
@@ -276,7 +277,7 @@ class SpectralAttentionS2(nn.Module):
                 )
 
             self.activations = nn.ModuleList([])
-            for l in range(0, self.spectral_layers):
+            for _ in range(0, self.spectral_layers):
                 self.activations.append(
                     ComplexReLU(
                         mode=complex_activation,
@@ -294,11 +295,11 @@ class SpectralAttentionS2(nn.Module):
             w = [
                 self.scale * torch.randn(self.modes_lat, self.embed_dim, hidden_size, 2)
             ]
-            for l in range(1, self.spectral_layers):
-                w.append(
-                    self.scale
-                    * torch.randn(self.modes_lat, hidden_size, hidden_size, 2)
-                )
+            w.extend(
+                self.scale
+                * torch.randn(self.modes_lat, hidden_size, hidden_size, 2)
+                for _ in range(1, self.spectral_layers)
+            )
             self.w = nn.ParameterList(w)
 
             if bias:
@@ -314,7 +315,7 @@ class SpectralAttentionS2(nn.Module):
             )
 
             self.activations = nn.ModuleList([])
-            for l in range(0, self.spectral_layers):
+            for _ in range(0, self.spectral_layers):
                 self.activations.append(
                     ComplexReLU(
                         mode=complex_activation,

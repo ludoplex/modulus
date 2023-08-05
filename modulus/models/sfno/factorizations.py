@@ -100,9 +100,7 @@ def _contract_cp(
     else:
         raise ValueError(f"Unkonw operator type {operator_type}")
 
-    eq = (
-        x_syms + "," + rank_sym + "," + ",".join(factor_syms) + "->" + "".join(out_syms)
-    )
+    eq = f"{x_syms},{rank_sym}," + ",".join(factor_syms) + "->" + "".join(out_syms)
 
     return tl.einsum(eq, x, cp_weight.weights, *cp_weight.factors)
 
@@ -112,8 +110,8 @@ def _contract_tucker(
 ):  # pragma: no cover
     order = tl.ndim(x)
 
-    x_syms = str(einsum_symbols[:order])
     out_sym = einsum_symbols[order]
+    x_syms = str(einsum_symbols[:order])
     out_syms = list(x_syms)
     if separable:
         core_syms = einsum_symbols[order + 1 : 2 * order]
@@ -141,10 +139,7 @@ def _contract_tucker(
         raise ValueError(f"Unkonw operator type {operator_type}")
 
     eq = (
-        x_syms
-        + ","
-        + core_syms
-        + ","
+        f"{x_syms},{core_syms},"
         + ",".join(factor_syms)
         + "->"
         + "".join(out_syms)
@@ -179,9 +174,9 @@ def _contract_tt(
         raise ValueError(f"Unkonw operator type {operator_type}")
 
     rank_syms = list(einsum_symbols[order + 2 :])
-    tt_syms = []
-    for i, s in enumerate(weight_syms):
-        tt_syms.append([rank_syms[i], s, rank_syms[i + 1]])
+    tt_syms = [
+        [rank_syms[i], s, rank_syms[i + 1]] for i, s in enumerate(weight_syms)
+    ]
     eq = (
         "".join(x_syms)
         + ","
@@ -203,10 +198,11 @@ def _contract_dense_pytorch(
 
     if separable:
         if operator_type == "diagonal":
-            if complex:
-                x = _contract_sep_diagonal(x, weight)
-            else:
-                x = _contract_sep_diagonal_real(x, weight)
+            x = (
+                _contract_sep_diagonal(x, weight)
+                if complex
+                else _contract_sep_diagonal_real(x, weight)
+            )
         elif operator_type == "dhconv":
             if complex:
                 x = _contract_sep_dhconv(x, weight)
@@ -214,19 +210,18 @@ def _contract_dense_pytorch(
                 x = _contract_sep_dhconv_real(x, weight)
         else:
             raise ValueError(f"Unkonw operator type {operator_type}")
-    else:
-        if operator_type == "diagonal":
-            if complex:
-                x = _contract_diagonal(x, weight)
-            else:
-                x = _contract_diagonal_real(x, weight)
-        elif operator_type == "dhconv":
-            if complex:
-                x = _contract_dhconv(x, weight)
-            else:
-                x = _contract_dhconv_real(x, weight)
+    elif operator_type == "diagonal":
+        if complex:
+            x = _contract_diagonal(x, weight)
         else:
-            raise ValueError(f"Unkonw operator type {operator_type}")
+            x = _contract_diagonal_real(x, weight)
+    elif operator_type == "dhconv":
+        if complex:
+            x = _contract_dhconv(x, weight)
+        else:
+            x = _contract_dhconv_real(x, weight)
+    else:
+        raise ValueError(f"Unkonw operator type {operator_type}")
 
     # to cheat the fused optimizers convert to real here
     x = torch.view_as_complex(x)
@@ -239,7 +234,7 @@ def get_contract_fun(
     separable=False,
     operator_type="diagonal",
     complex=True,
-):  # pragma: no cover
+):    # pragma: no cover
     """Generic ND implementation of Fourier Spectral Conv contraction
 
     Parameters
@@ -258,15 +253,14 @@ def get_contract_fun(
         return _contract_dense
     elif implementation == "factorized":
         if torch.is_tensor(weight):
-            handle = partial(
+            return partial(
                 _contract_dense_pytorch,
                 separable=separable,
                 complex=complex,
                 operator_type=operator_type,
             )
-            return handle
         elif isinstance(weight, FactorizedTensor):
-            if weight.name.lower() == "complexdense" or weight.name.lower() == "dense":
+            if weight.name.lower() in ["complexdense", "dense"]:
                 return _contract_dense
             elif weight.name.lower() == "complextucker":
                 return _contract_tucker

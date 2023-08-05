@@ -51,8 +51,7 @@ class MiniNetwork(torch.nn.Module):
         self.param = torch.nn.Parameter(torch.randn(1))
 
     def forward(self, inputs: Tuple[Tensor, ...]) -> Tuple[Tensor, ...]:
-        output = tuple(self.param * invar for invar in inputs)
-        return output
+        return tuple(self.param * invar for invar in inputs)
 
 
 def check_cuda_graphs(

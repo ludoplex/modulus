@@ -93,9 +93,12 @@ class GraphCastProcessor(nn.Module):
 
         layers = []
         for _ in range(processor_layers):
-            layers.append(MeshEdgeBlock(*edge_block_invars))
-            layers.append(MeshNodeBlock(*node_block_invars))
-
+            layers.extend(
+                (
+                    MeshEdgeBlock(*edge_block_invars),
+                    MeshNodeBlock(*node_block_invars),
+                )
+            )
         self.processor_layers = nn.ModuleList(layers)
         self.num_processor_layers = len(self.processor_layers)
         # per default, no checkpointing
@@ -124,10 +127,10 @@ class GraphCastProcessor(nn.Module):
                     "Processor layers must be a multiple of checkpoint_segments"
                 )
             segment_size = self.num_processor_layers // checkpoint_segments
-            self.checkpoint_segments = []
-            for i in range(0, self.num_processor_layers, segment_size):
-                self.checkpoint_segments.append((i, i + segment_size))
-
+            self.checkpoint_segments = [
+                (i, i + segment_size)
+                for i in range(0, self.num_processor_layers, segment_size)
+            ]
             self.checkpoint_fn = set_checkpoint_fn(True)
         else:
             self.checkpoint_fn = set_checkpoint_fn(False)

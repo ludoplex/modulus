@@ -112,6 +112,4 @@ class MeshGraphDecoder(nn.Module):
         efeat = self.edge_mlp(m2g_efeat, (mesh_nfeat, grid_nfeat), graph)
         # aggregate messages (edge features) to obtain updated node features
         cat_feat = aggregate_and_concat(efeat, grid_nfeat, graph, self.aggregation)
-        # transformation and residual connection
-        dst_feat = self.node_mlp(cat_feat) + grid_nfeat
-        return dst_feat
+        return self.node_mlp(cat_feat) + grid_nfeat
